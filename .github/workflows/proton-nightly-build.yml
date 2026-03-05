@@ -170,15 +170,10 @@ jobs:
             --without-udev \
             --without-capi \
             --without-ffmpeg
-          # Build only the host tools needed for cross-compilation.
-          # Wine 9+ uses a flat Makefile; these are the specific targets needed.
-          make -j$(nproc) \
-            tools/makedep \
-            tools/winebuild/winebuild \
-            tools/widl/widl \
-            tools/wrc/wrc \
-            tools/wmc/wmc \
-            tools/winegcc/winegcc
+          # __tooldeps__ is the Wine 9+ phony target that builds everything under
+          # tools/ and tools/*/ — including makedep, winebuild, widl, wrc, wmc,
+          # winegcc, and make_xftmpl. Replaces the removed __builtin__ target.
+          make -j$(nproc) __tooldeps__
 
       # --------------------------------------------------------
       # 8. Configure ARM64 target

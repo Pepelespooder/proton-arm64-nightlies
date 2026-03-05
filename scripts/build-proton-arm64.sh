@@ -160,16 +160,9 @@ if [[ $SKIP_TOOLS -eq 0 ]]; then
     log ""
     log "--- Step 2: Build host wine-tools ---"
     TOOLS_START="$(date -u +%s)"
-    # Build only the tool binaries needed for cross-compilation.
-    # toolsdir logic in makedep.c appends /tools/<name>, so --with-wine-tools
-    # must point to BUILD_DIR/host (not BUILD_DIR/host/tools).
-    make -C "$BUILD_DIR/host" -j"$JOBS" \
-        tools/makedep \
-        tools/winebuild/winebuild \
-        tools/widl/widl \
-        tools/wrc/wrc \
-        tools/wmc/wmc \
-        tools/winegcc/winegcc
+    # __tooldeps__ builds everything under tools/ and tools/*/ at once.
+    # This is the Wine 9+ replacement for the removed __builtin__ target.
+    make -C "$BUILD_DIR/host" -j"$JOBS" __tooldeps__
     TOOLS_TIME=$(( $(date -u +%s) - TOOLS_START ))
     log "Host tools built in ${TOOLS_TIME}s"
 fi
@@ -243,7 +236,7 @@ make -C "$BUILD_DIR/target" install DESTDIR="$INSTALL_DIR"
 
 # Reorganize to match expected .wcp layout
 # make install puts files under prefix; flatten to bin/ lib/ share/
-WINE_PREFIX_INNER="$INSTALL_DIR/data/data/com.winlator/wine"
+WINE_PREFIX_INNER="$INSTALL_DIR/data/data/com.winlator.cmod/files/imagefs/usr/opt/wine"
 if [[ -d "$WINE_PREFIX_INNER" ]]; then
     cp -r "$WINE_PREFIX_INNER/." "$INSTALL_DIR/"
     rm -rf "$INSTALL_DIR/data"
