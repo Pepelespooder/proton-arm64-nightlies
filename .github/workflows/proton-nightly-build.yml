@@ -178,51 +178,43 @@ jobs:
           GIT_DATE=$(git -C wine-source log -1 --format='%cd' --date=format:'%Y%m%d')
           VERSION="10-arm64ec-nightly-${GIT_DATE}-${GIT_HASH}"
 
-          # Proton profile
-          cat > "$OUTPUT_DIR/profile.json" << PROFILE
-          {
-            "type": "Proton",
-            "versionName": "${VERSION}",
-            "versionCode": 1,
-            "description": "Proton 10 ARM64 nightly ${GIT_DATE} (${GIT_HASH})",
-            "files": [],
-            "wine": {
-              "binPath": "bin",
-              "libPath": "lib",
-              "prefixPack": "prefixPack.txz"
-            }
-          }
-          PROFILE
-
           mkdir -p "$GITHUB_WORKSPACE/output"
 
-          # .wcp (zstd) for standard Winlator / GameNative
+          # Proton profile — for standard Winlator / GameNative
+          python3 -c "
+import json
+profile = {
+  'type': 'Proton',
+  'versionName': '${VERSION}',
+  'versionCode': 1,
+  'description': 'Proton 10 ARM64 nightly ${GIT_DATE} (${GIT_HASH})',
+  'files': [],
+  'wine': {'binPath': 'bin', 'libPath': 'lib', 'prefixPack': 'prefixPack.txz'}
+}
+open('${OUTPUT_DIR}/profile.json', 'w').write(json.dumps(profile, indent=2))
+"
           cd "$OUTPUT_DIR"
           tar -cf - bin lib share prefixPack.txz profile.json \
             | zstd -T0 -19 -o "$GITHUB_WORKSPACE/output/proton-${VERSION}.wcp"
 
-          # Wine profile for CMOD/Ludashi
-          cat > "$OUTPUT_DIR/profile.json" << PROFILE
-          {
-            "type": "Wine",
-            "versionName": "${VERSION}",
-            "versionCode": 0,
-            "description": "Proton 10 ARM64 nightly ${GIT_DATE} (${GIT_HASH})",
-            "files": [],
-            "wine": {
-              "binPath": "bin",
-              "libPath": "lib",
-              "prefixPack": "prefixPack.txz"
-            }
-          }
-          PROFILE
-
-          # .wcp.xz (xz) for Winlator CMOD / Ludashi
+          # Wine profile — for Winlator CMOD / Ludashi
+          python3 -c "
+import json
+profile = {
+  'type': 'Wine',
+  'versionName': '${VERSION}',
+  'versionCode': 0,
+  'description': 'Proton 10 ARM64 nightly ${GIT_DATE} (${GIT_HASH})',
+  'files': [],
+  'wine': {'binPath': 'bin', 'libPath': 'lib', 'prefixPack': 'prefixPack.txz'}
+}
+open('${OUTPUT_DIR}/profile.json', 'w').write(json.dumps(profile, indent=2))
+"
           tar -cJf "$GITHUB_WORKSPACE/output/proton-wine-${VERSION}.wcp.xz" \
             bin lib share prefixPack.txz profile.json
 
           cd "$GITHUB_WORKSPACE"
-          sha256sum output/proton-${VERSION}.wcp      > output/proton-${VERSION}.wcp.sha256
+          sha256sum output/proton-${VERSION}.wcp > output/proton-${VERSION}.wcp.sha256
           sha256sum output/proton-wine-${VERSION}.wcp.xz > output/proton-wine-${VERSION}.wcp.xz.sha256
 
           ls -lh output/
