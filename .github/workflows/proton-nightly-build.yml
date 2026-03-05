@@ -1,6 +1,6 @@
 name: Proton ARM64 Nightly Build
 
-"on":
+on:
   schedule:
     - cron: '0 2 * * *'   # 2 AM UTC daily
   workflow_dispatch:        # Manual trigger
@@ -403,31 +403,19 @@ jobs:
       # --------------------------------------------------------
       - name: Update latest.json
         run: |
-          WCP_SHA=$(cut -d' ' -f1 output/${{ env.OUTPUT_WCP }}.sha256)
-          WCPXZ_SHA=$(cut -d' ' -f1 output/${{ env.OUTPUT_WCPXZ }}.sha256)
-          python3 - <<'PYEOF'
-          import json, os
-          data = {
-            "versionName": f"10-arm64ec-nightly-{os.environ['GIT_DATE']}-{os.environ['GIT_HASH']}",
-            "date": os.environ['GIT_DATE'],
-            "gitHash": os.environ['GIT_HASH'],
-            "wcp": {
-              "fileName": os.environ['OUTPUT_WCP'],
-              "sha256": os.environ['WCP_SHA']
-            },
-            "wcpxz": {
-              "fileName": os.environ['OUTPUT_WCPXZ'],
-              "sha256": os.environ['WCPXZ_SHA']
-            },
-            "releaseTag": f"nightly-{os.environ['GIT_DATE']}-{os.environ['GIT_HASH']}"
-          }
-          with open("latest.json", "w") as f:
-            json.dump(data, f, indent=2)
-          print(json.dumps(data, indent=2))
-          PYEOF
-        env:
-          WCP_SHA: ${{ env.WCP_SHA }}
-          WCPXZ_SHA: ${{ env.WCPXZ_SHA }}
+          WCP_SHA=$(cut -d' ' -f1 "output/${{ env.OUTPUT_WCP }}.sha256")
+          WCPXZ_SHA=$(cut -d' ' -f1 "output/${{ env.OUTPUT_WCPXZ }}.sha256")
+          python3 build-scripts/scripts/generate_latest.py \
+            "latest.json" \
+            "10-arm64ec-nightly-${{ env.GIT_DATE }}-${{ env.GIT_HASH }}" \
+            "${{ env.GIT_DATE }}" \
+            "${{ env.GIT_HASH }}" \
+            "${{ env.OUTPUT_WCP }}" \
+            "$WCP_SHA" \
+            "${{ env.OUTPUT_WCPXZ }}" \
+            "$WCPXZ_SHA" \
+            "nightly-${{ env.GIT_DATE }}-${{ env.GIT_HASH }}"
+          cat latest.json
 
       - name: Commit latest.json
         run: |
