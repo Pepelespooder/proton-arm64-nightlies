@@ -1,59 +1,48 @@
-# Proton 10 ARM64 Nightly Builds for Winlator
+# Proton ARM64 Nightlies for Winlator
 
-Automated nightly builds of Wine/Proton for ARM64 Android, packaged as `.wcp` files
-for use in Winlator Cmod.
+Nightly builds of Proton for Android ARM64, packaged as `.wcp` files ready to drop into Winlator Cmod. Builds run automatically every night pulling the latest commits straight from Valve's bleeding-edge Wine branch, with GameNative's Android and ARM64EC patches layered on top.
 
-## Quick Start
+## Getting a build
 
-1. Download the latest `.wcp` from [Releases](../../releases)
-2. Import into Winlator: Settings > Wine Version > Import
-3. Select the nightly build in your container settings
+1. Head to [Releases](../../releases) and grab the latest `.wcp` file
+2. Copy it to your Android device
+3. Open Winlator → Settings → Wine Version → Import
+4. Pick the file, then select it in your container settings
 
-See [USER_GUIDE.md](docs/USER_GUIDE.md) for detailed installation instructions.
+That's it. If you want more detail on installation, [USER_GUIDE.md](docs/USER_GUIDE.md) has you covered.
 
-## What's in Each Build
+## What's inside
 
-- Wine ARM64 (aarch64) for Android (NDK r27, API 28+)
-- ARM64 Windows PE DLLs (aarch64-windows)
-- 32-bit Windows PE DLLs (i386-windows) for WoW64
-- Default Wine prefix (prefixPack.txz)
+Each build includes:
 
-## Build Status
+- Wine for ARM64 Android (built with NDK r27d, targeting Android 9+)
+- ARM64EC Windows PE DLLs — for running ARM64 Windows apps natively
+- ARM64 and 32-bit (WoW64) PE DLLs
+- A default Wine prefix (`prefixPack.txz`) so things work out of the box
 
-Builds run nightly at 2 AM UTC. Check the [Actions tab](../../actions) for status.
+There are two package formats per build:
 
-## Latest Build
+| File | For |
+|------|-----|
+| `.wcp` | Standard Winlator / GameNative |
+| `.wcp.xz` | Winlator Cmod / Ludashi |
 
-See [latest.json](latest.json) for the current nightly metadata.
+## Where the source comes from
 
-## Documentation
+The base Wine source is **Valve's `bleeding-edge` branch** — the same branch that Proton bleeding-edge tracks internally. On top of that, Android support and ARM64EC patches come from [GameNative/proton-wine](https://github.com/GameNative/proton-wine). Every nightly picks up whatever Valve pushed that day automatically.
 
-| Document | Description |
-|----------|-------------|
-| [WCP_STRUCTURE.md](docs/WCP_STRUCTURE.md) | .wcp file format, reverse-engineered from reference |
-| [BUILD_REQUIREMENTS.md](docs/BUILD_REQUIREMENTS.md) | What you need to build locally |
-| [BUILD_ISSUES.md](docs/BUILD_ISSUES.md) | Known problems and solutions |
-| [USER_GUIDE.md](docs/USER_GUIDE.md) | How to install and use the builds |
-| [DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) | How to contribute or customize |
+## Build status
 
-## Key Findings from Analysis
+Builds kick off at 2 AM UTC daily. You can check whether the latest run succeeded in the [Actions tab](../../actions). The [latest.json](latest.json) file always reflects the most recent successful build.
 
-The `.wcp` format (discovered by reverse-engineering the reference build):
+## Docs
 
-- **Compression:** Zstandard (zstd), NOT XZ as assumed
-- **profile.json type:** `"Proton"` (not `"Wine"`)
-- **Binaries:** Android NDK r27, targeting Android API 28+
-- **Structure:** `bin/` + `lib/wine/{aarch64-unix,aarch64-windows,i386-windows}/` + `share/wine/` + `prefixPack.txz`
-
-## Reference Build
-
-The reference `.wcp` analyzed: `Proton-10-arm64ec-controller-fix.wcp` by K11MCH1
-
-- Compressed: 222 MB (Zstandard)
-- Uncompressed: 1,436 MB
-- Source: https://github.com/K11MCH1/Winlator101
+- [WCP_STRUCTURE.md](docs/WCP_STRUCTURE.md) — how the `.wcp` format works
+- [BUILD_REQUIREMENTS.md](docs/BUILD_REQUIREMENTS.md) — what you need to build locally
+- [BUILD_ISSUES.md](docs/BUILD_ISSUES.md) — known issues and fixes
+- [USER_GUIDE.md](docs/USER_GUIDE.md) — installation walkthrough
+- [DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) — how to contribute or fork
 
 ## License
 
-Scripts in this repository are MIT licensed. Wine itself is LGPL.
-See [LICENSE](LICENSE) for details.
+The scripts in this repo are MIT licensed. Wine itself is LGPL. See [LICENSE](LICENSE).
