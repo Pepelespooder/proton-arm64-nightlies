@@ -8,7 +8,7 @@ on:
       wine_ref:
         description: 'Wine source ref (branch, tag, or commit)'
         required: false
-        default: 'master'
+        default: 'wine-10.0'
       debug:
         description: 'Enable debug output'
         required: false
@@ -16,9 +16,14 @@ on:
 
 env:
   NDK_VERSION: android-ndk-r27c
+  # NDK 27.0.12077973 = r27c; clang 18.0.1 — matches reference build exactly
   ANDROID_API: 28
-  WINE_SOURCE_REPO: https://github.com/brunodev85/winlator  # Replace with actual Wine Android fork
-  WINE_REF: ${{ github.event.inputs.wine_ref || 'master' }}
+  # Wine source: wine-mirror/wine is the GitHub mirror of WineHQ mainline.
+  # The reference .wcp was built from Wine 10.0 stable with local arm64ec patches
+  # by an individual builder (not a public fork). wine-mirror/wine is the closest
+  # public equivalent. Set WINE_REF to the stable tag you want to build.
+  WINE_SOURCE_REPO: https://github.com/wine-mirror/wine
+  WINE_REF: ${{ github.event.inputs.wine_ref || 'wine-10.0' }}
 
 jobs:
   build:
