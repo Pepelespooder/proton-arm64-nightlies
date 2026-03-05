@@ -15,13 +15,14 @@ on:
         default: 'false'
 
 env:
-  WINE_SOURCE_REPO: https://github.com/GameNative/proton-wine
-  WINE_REF: ${{ github.event.inputs.wine_ref || 'proton_10.0' }}
-  # Upstream Valve Wine branch to merge nightly changes from.
-  # bleeding-edge = the branch ValveSoftware/Proton bleeding-edge pins its
-  # wine submodule to; always the most up-to-date Valve Wine commits.
-  UPSTREAM_REPO: https://github.com/ValveSoftware/wine
-  UPSTREAM_REF: bleeding-edge
+  # Primary Wine source: Valve bleeding-edge (most up-to-date Proton Wine commits).
+  # This is the exact branch ValveSoftware/Proton bleeding-edge pins its wine submodule to.
+  WINE_SOURCE_REPO: https://github.com/ValveSoftware/wine
+  WINE_REF: bleeding-edge
+  # GameNative supplies the Android/ARM64EC patch files and build scripts.
+  # We clone it separately to copy android/patches/ and build-scripts/ onto the bleeding-edge source.
+  GAMENATIVE_REPO: https://github.com/GameNative/proton-wine
+  GAMENATIVE_REF: proton_10.0
 
 jobs:
   build:
@@ -80,49 +81,39 @@ jobs:
           pip3 install zstandard --quiet
 
       # --------------------------------------------------------
-      # 3. Checkout Wine source and merge upstream Valve nightly
+      # 3. Clone Wine source (ValveSoftware/wine bleeding-edge)
       # --------------------------------------------------------
-      - name: Clone Wine source (GameNative/proton-wine)
+      - name: Clone Wine source (ValveSoftware/wine bleeding-edge)
         run: |
-          git clone --depth=50 --branch "${{ env.WINE_REF }}" \
+          git clone --depth=1 --branch "${{ env.WINE_REF }}" \
             "${{ env.WINE_SOURCE_REPO }}" wine-source
+          echo "GIT_HASH=$(git -C wine-source rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "GIT_DATE=$(git -C wine-source log -1 --format='%cd' --date=format:'%Y%m%d')" >> $GITHUB_ENV
 
-      - name: Merge upstream Valve proton_10.0 changes
+      # --------------------------------------------------------
+      # 3b. Clone GameNative to get Android patches + build scripts
+      # --------------------------------------------------------
+      - name: Clone GameNative (patches + build scripts only)
         run: |
-          cd wine-source
-          git remote add upstream "${{ env.UPSTREAM_REPO }}"
-          # Fetch only the upstream branch tip (shallow, enough for merge base detection)
-          git fetch --depth=50 upstream "${{ env.UPSTREAM_REF }}"
-
-          UPSTREAM_HASH=$(git rev-parse upstream/${{ env.UPSTREAM_REF }})
-          LOCAL_HASH=$(git rev-parse HEAD)
-          echo "GameNative HEAD:  $LOCAL_HASH"
-          echo "Valve upstream:   $UPSTREAM_HASH"
-
-          # Check if upstream has anything not already in our branch
-          if git merge-base --is-ancestor upstream/${{ env.UPSTREAM_REF }} HEAD; then
-            echo "No new upstream commits — GameNative is already up to date."
-          else
-            echo "Merging upstream Valve commits..."
-            git config user.name  "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            # Merge strategy: prefer GameNative patches (ours) on conflict
-            git merge --no-edit -X ours upstream/${{ env.UPSTREAM_REF }} \
-              || { echo "Merge failed — upstream conflict too large; building GameNative HEAD only."; git merge --abort; }
-            echo "Merge complete."
+          git clone --depth=1 --branch "${{ env.GAMENATIVE_REF }}" \
+            "${{ env.GAMENATIVE_REPO }}" gamenative-src
+          # Copy Android patch files and build scripts onto the bleeding-edge source tree.
+          # The patches are applied at configure time by build-step-arm64ec.sh --configure.
+          cp -r gamenative-src/android wine-source/android
+          cp -r gamenative-src/build-scripts wine-source/build-scripts
+          # Copy android_sysvshm if present
+          if [ -d gamenative-src/android/android_sysvshm ]; then
+            echo "android_sysvshm directory present."
           fi
-
-          echo "GIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          echo "GIT_DATE=$(git log -1 --format='%cd' --date=format:'%Y%m%d')" >> $GITHUB_ENV
-          echo "UPSTREAM_SHORT=$(echo $UPSTREAM_HASH | cut -c1-7)" >> $GITHUB_ENV
+          rm -rf gamenative-src
+          echo "GameNative patches and build scripts layered onto bleeding-edge source."
 
       - name: Report source state
         run: |
           echo "=== Source state ==="
-          echo "Branch:    ${{ env.WINE_REF }}"
-          echo "Our HEAD:  ${{ env.GIT_HASH }}"
-          echo "Valve tip: ${{ env.UPSTREAM_SHORT }}"
-          git -C wine-source log --oneline -10
+          echo "Wine base:  ValveSoftware/wine bleeding-edge @ ${{ env.GIT_HASH }} (${{ env.GIT_DATE }})"
+          echo "Patches:    GameNative/proton-wine ${{ env.GAMENATIVE_REF }}"
+          git -C wine-source log --oneline -5
 
       # --------------------------------------------------------
       # 4. Checkout this repo (packaging scripts)
@@ -330,14 +321,14 @@ jobs:
             ## Proton 10 ARM64 Nightly Build
 
             **Build date:** ${{ env.GIT_DATE }}
-            **Build commit:** ${{ env.GIT_HASH }}
-            **Valve upstream:** ValveSoftware/wine bleeding-edge @ ${{ env.UPSTREAM_SHORT }}
-            **Base:** GameNative/proton-wine (Android patches + ARM64EC bylaws patches)
+            **Wine commit:** ${{ env.GIT_HASH }} (ValveSoftware/wine bleeding-edge)
+            **Patches:** GameNative/proton-wine Android + ARM64EC bylaws patches
             **Target:** Android ARM64 (API 28+, bionic)
             **Toolchain:** Android NDK r27d + bylaws/llvm-mingw-20250920
 
-            > Upstream Valve `bleeding-edge` (the Wine branch Proton bleeding-edge tracks) is automatically merged each night.
-            > GameNative patches take priority on conflict.
+            > Wine base is Valve's `bleeding-edge` branch — the most up-to-date Proton Wine,
+            > the exact branch that `ValveSoftware/Proton bleeding-edge` tracks.
+            > Android and ARM64EC patches are sourced from GameNative/proton-wine.
             > This is an automated nightly build for testing purposes. Use at your own risk.
 
             ### Installation
