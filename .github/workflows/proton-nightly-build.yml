@@ -459,3 +459,15 @@ jobs:
 
 
 
+
+      - name: Cleanup runner workspace
+        if: ${{ always() && contains(runner.labels, 'self-hosted') }}
+        run: |
+          set +e
+          echo "=== Disk usage before cleanup ==="
+          df -h
+          rm -rf "$GITHUB_WORKSPACE/wine-source" "$GITHUB_WORKSPACE/gamenative-src" "$GITHUB_WORKSPACE/output" || true
+          rm -rf "$HOME/compiled-files-aarch64" "$HOME/wine-staging" "$HOME/kernel-compat-donor" || true
+          rm -rf "$RUNNER_TEMP"/* || true
+          echo "=== Disk usage after cleanup ==="
+          df -h
