@@ -321,26 +321,7 @@ jobs:
 
           if [ -z "$COMPAT_URL" ]; then
             echo "No donor URL provided, resolving latest GameNative Proton arm64ec WCP..."
-            python3 - <<'PY' > "$WORK_DIR/resolved_url.txt"
-import json
-import re
-import urllib.request
-
-api = "https://api.github.com/repos/GameNative/proton-wine/releases/latest"
-with urllib.request.urlopen(api) as r:
-    data = json.load(r)
-
-assets = data.get("assets", [])
-# Prefer standard Proton donor, avoid proton-wine-* variants.
-cands = [
-    a.get("browser_download_url", "")
-    for a in assets
-    if re.match(r"^proton-[0-9].*arm64ec\.wcp$", a.get("name", ""))
-]
-
-print(cands[0] if cands else "")
-PY
-            COMPAT_URL="$(cat "$WORK_DIR/resolved_url.txt")"
+            COMPAT_URL="$(python3 -c 'import json,re,urllib.request; data=json.load(urllib.request.urlopen("https://api.github.com/repos/GameNative/proton-wine/releases/latest")); assets=data.get("assets",[]); c=[a.get("browser_download_url","") for a in assets if re.match(r"^proton-[0-9].*arm64ec\.wcp$", a.get("name",""))]; print(c[0] if c else "")')"
           fi
 
           if [ -z "$COMPAT_URL" ]; then
@@ -458,6 +439,10 @@ PY
           git diff --staged --quiet || git commit -m "chore: update latest.json for nightly ${GIT_DATE}"
           git pull --rebase origin HEAD
           git push
+
+
+
+
 
 
 
