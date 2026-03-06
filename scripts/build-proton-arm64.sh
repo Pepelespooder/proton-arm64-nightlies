@@ -268,7 +268,7 @@ cat > "$INSTALL_DIR/profile.json" << EOF
   "versionCode": ${VERSION_CODE},
   "description": "Proton 10 ARM64 nightly build from commit ${GIT_HASH} (${GIT_DATE})",
   "files": [],
-  "proton": {
+  "wine": {
     "binPath": "bin",
     "libPath": "lib",
     "prefixPack": "prefixPack.txz"
@@ -318,3 +318,4 @@ log "Total time: ${TOTAL_TIME}s ($(( TOTAL_TIME / 60 ))m)"
 log "Output:     $OUTPUT_WCP"
 log "SHA256:     $(cat "${OUTPUT_WCP}.sha256" | cut -d' ' -f1)"
 log "Size:       $(du -sh "$OUTPUT_WCP" | cut -f1)"
+

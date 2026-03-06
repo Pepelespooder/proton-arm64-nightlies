@@ -87,7 +87,7 @@ cat > "$INPUT_DIR/profile.json" << EOF
   "versionCode": ${VERSION_CODE},
   "description": "${DESCRIPTION}",
   "files": [],
-  "proton": {
+  "wine": {
     "binPath": "bin",
     "libPath": "lib",
     "prefixPack": "prefixPack.txz"
@@ -169,3 +169,4 @@ echo "  SHA256: $(cat "${OUTPUT_WCP}.sha256" | cut -d' ' -f1)"
 echo ""
 echo "Done. Package created: $OUTPUT_WCP"
 echo "Checksum file:         ${OUTPUT_WCP}.sha256"
+

@@ -18,7 +18,8 @@ def main():
     description = sys.argv[4]
     profile_type = "Wine" if len(sys.argv) > 5 and sys.argv[5] == "wine" else "Proton"
 
-    paths_key = "proton" if profile_type == "Proton" else "wine"
+    # GameNative expects path keys under "wine" even for Proton type profiles.
+    paths_key = "wine"
     profile = {
         "type": profile_type,
         "versionName": version_name,
