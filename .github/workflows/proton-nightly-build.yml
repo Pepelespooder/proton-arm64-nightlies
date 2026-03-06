@@ -96,52 +96,46 @@ jobs:
           # the ntdll.so link step doesn't pull it in, causing undefined symbol.
           python3 scripts/fix_virtual_c.py wine-source
 
-      - name: Cache termuxfs aarch64
-        id: cache-termuxfs
-        uses: actions/cache@v4
-        with:
-          path: ~/termuxfs/aarch64
-          key: termuxfs-aarch64-build-20260218
-
       - name: Download and extract termuxfs for aarch64
-        if: steps.cache-termuxfs.outputs.cache-hit != 'true'
         run: |
-          mkdir -p $HOME/termuxfs/aarch64
-          cd $HOME/termuxfs/aarch64
-          wget https://github.com/GameNative/termux-on-gha/releases/download/build-20260218/termuxfs-aarch64.tar
-          tar -xf termuxfs-aarch64.tar
-          ls -la $HOME/termuxfs/aarch64/
-
-      - name: Cache Android NDK
-        id: cache-ndk
-        uses: actions/cache@v4
-        with:
-          path: ~/Android/Sdk/ndk/27.3.13750724
-          key: android-ndk-r27d
+          TERMUX_DIR="$HOME/termuxfs/aarch64"
+          if [ ! -d "$TERMUX_DIR/data/data/com.termux/files/usr/include" ]; then
+            echo "termuxfs not found, downloading..."
+            mkdir -p "$TERMUX_DIR"
+            cd "$TERMUX_DIR"
+            wget -q https://github.com/GameNative/termux-on-gha/releases/download/build-20260218/termuxfs-aarch64.tar
+            tar -xf termuxfs-aarch64.tar
+            rm -f termuxfs-aarch64.tar
+          else
+            echo "termuxfs already present, skipping download."
+          fi
 
       - name: Set up Android NDK
-        if: steps.cache-ndk.outputs.cache-hit != 'true'
         run: |
-          mkdir -p $HOME/Android/Sdk/ndk
-          cd $HOME/Android/Sdk/ndk
-          wget https://dl.google.com/android/repository/android-ndk-r27d-linux.zip
-          unzip -q android-ndk-r27d-linux.zip
-          mv android-ndk-r27d 27.3.13750724
-
-      - name: Cache LLVM MinGW toolchain
-        id: cache-llvm-mingw
-        uses: actions/cache@v4
-        with:
-          path: ~/toolchains/llvm-mingw-20250920-ucrt-ubuntu-22.04-x86_64
-          key: bylaws-llvm-mingw-20250920
+          NDK_DIR="$HOME/Android/Sdk/ndk/27.3.13750724"
+          if [ ! -f "$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang" ]; then
+            echo "NDK not found, downloading..."
+            mkdir -p "$HOME/Android/Sdk/ndk"
+            cd "$HOME/Android/Sdk/ndk"
+            wget -q https://dl.google.com/android/repository/android-ndk-r27d-linux.zip
+            unzip -q android-ndk-r27d-linux.zip
+            mv android-ndk-r27d 27.3.13750724
+          else
+            echo "NDK already installed, skipping download."
+          fi
 
       - name: Set up LLVM MinGW toolchain
-        if: steps.cache-llvm-mingw.outputs.cache-hit != 'true'
         run: |
-          mkdir -p $HOME/toolchains
-          cd $HOME/toolchains
-          wget https://github.com/bylaws/llvm-mingw/releases/download/20250920/llvm-mingw-20250920-ucrt-ubuntu-22.04-x86_64.tar.xz
-          tar -xf llvm-mingw-20250920-ucrt-ubuntu-22.04-x86_64.tar.xz
+          LLVM_DIR="$HOME/toolchains/llvm-mingw-20250920-ucrt-ubuntu-22.04-x86_64"
+          if [ ! -f "$LLVM_DIR/bin/llvm-dlltool" ]; then
+            echo "LLVM MinGW not found, downloading..."
+            mkdir -p "$HOME/toolchains"
+            cd "$HOME/toolchains"
+            wget -q https://github.com/bylaws/llvm-mingw/releases/download/20250920/llvm-mingw-20250920-ucrt-ubuntu-22.04-x86_64.tar.xz
+            tar -xf llvm-mingw-20250920-ucrt-ubuntu-22.04-x86_64.tar.xz
+          else
+            echo "LLVM MinGW already installed, skipping download."
+          fi
 
       - name: Add bylaws llvm-mingw to PATH
         run: |
