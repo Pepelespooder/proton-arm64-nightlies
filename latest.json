@@ -1,9 +1,14 @@
 {
-  "versionName": "10-arm64ec",
-  "date": "20250808",
-  "gitHash": "reference",
-  "fileName": "Proton-10-arm64ec-controller-fix.wcp",
-  "sha256": "",
-  "releaseTag": "wine_col",
-  "note": "This file is updated automatically by CI. Currently pointing to reference build."
+  "versionName": "10-arm64ec-nightly-20260305-61cbb05",
+  "date": "20260305",
+  "gitHash": "61cbb05",
+  "wcp": {
+    "fileName": "proton-10-arm64ec-nightly-20260305-61cbb05.wcp",
+    "sha256": "129340d43b32923039b041a24c4e12047c3978deeae67d1316be9bda5218e0d0"
+  },
+  "wcpxz": {
+    "fileName": "proton-wine-10-arm64ec-nightly-20260305-61cbb05.wcp.xz",
+    "sha256": "a71f033f519c45bc3583a03c5bee9fc365fccb97be9dd1b60f4a18847784d6ec"
+  },
+  "releaseTag": "nightly-20260305-61cbb05"
 }
