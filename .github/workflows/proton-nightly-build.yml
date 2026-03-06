@@ -66,6 +66,12 @@ jobs:
           cp -r gamenative-src/build-scripts wine-source/build-scripts
           rm -rf gamenative-src
 
+          # Override GameNative's window.c patch with one rebased against bleeding-edge.
+          # The original targets proton_10.0 line numbers and references _NET_WM_HWND
+          # which doesn't exist in bleeding-edge's x11drv.h atom list.
+          cp patches/dlls_winex11_drv_window_c.patch \
+            wine-source/android/patches/dlls_winex11_drv_window_c.patch
+
       - name: Download and extract termuxfs for aarch64
         run: |
           mkdir -p $HOME/termuxfs/aarch64
