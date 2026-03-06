@@ -74,10 +74,11 @@ jobs:
           # bleeding-edge). Rewrite the apply command to use reduced context (-C1) and
           # --ignore-whitespace so line-number shifts don't cause failures, then skip
           # any patch that still can't apply rather than aborting the whole build.
-          # Make git apply forgiving: skip patches that don't apply cleanly to
-          # bleeding-edge instead of aborting the whole configure step.
-          python3 scripts/patch_build_script.py \
-            wine-source/build-scripts/build-step-arm64ec.sh
+          # Comment out patches already merged into bleeding-edge so they don't
+          # get double-applied and cause compile errors.
+          python3 scripts/filter_patches.py \
+            wine-source/build-scripts/build-step-arm64ec.sh \
+            wine-source
 
       - name: Download and extract termuxfs for aarch64
         run: |
