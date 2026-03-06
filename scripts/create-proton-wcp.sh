@@ -6,7 +6,7 @@
 #   ./create-proton-wcp.sh <input_dir> <output.wcp> [version_name] [version_code] [description]
 #
 # Arguments:
-#   input_dir    Directory containing: bin/ lib/ share/ profile.json prefixPack.txz
+#   input_dir    Directory containing: bin/ lib/ share/ prefixPack.txz (profile.json is always regenerated)
 #   output.wcp   Output .wcp file path
 #   version_name Optional: version string (default: derived from git or date)
 #   version_code Optional: integer version code (default: YYYYMMDD)
@@ -46,16 +46,12 @@ OUTPUT_WCP="$(realpath -m "$OUTPUT_WCP")"
 echo "[1/6] Validating input directory structure..."
 
 MISSING=0
-for required in bin lib share profile.json prefixPack.txz; do
+for required in bin lib share prefixPack.txz; do
     if [[ ! -e "$INPUT_DIR/$required" ]]; then
         echo "  WARNING: Missing expected item: $required"
         MISSING=$((MISSING + 1))
     fi
 done
-
-if [[ ! -e "$INPUT_DIR/profile.json" ]]; then
-    echo "  profile.json is required - will generate one."
-fi
 
 # --- Default version info from git or date ---
 DATE_TAG="$(date -u +%Y%m%d)"
@@ -81,12 +77,10 @@ echo "  Version name: $VERSION_NAME"
 echo "  Version code: $VERSION_CODE"
 echo "  Description:  $DESCRIPTION"
 
-# --- Generate profile.json if missing ---
-echo "[2/6] Checking profile.json..."
+# --- Always regenerate profile.json ---
+echo "[2/6] Generating profile.json..."
 
-if [[ ! -f "$INPUT_DIR/profile.json" ]]; then
-    echo "  Generating profile.json..."
-    cat > "$INPUT_DIR/profile.json" << EOF
+cat > "$INPUT_DIR/profile.json" << EOF
 {
   "type": "Proton",
   "versionName": "${VERSION_NAME}",
@@ -100,10 +94,7 @@ if [[ ! -f "$INPUT_DIR/profile.json" ]]; then
   }
 }
 EOF
-    echo "  Generated profile.json"
-else
-    echo "  Using existing profile.json"
-fi
+echo "  Generated profile.json"
 
 # --- Check compression tools ---
 echo "[3/6] Checking available compression tools..."
