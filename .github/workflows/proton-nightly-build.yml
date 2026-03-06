@@ -367,6 +367,13 @@ jobs:
           #   -> PROFILE_VERSION=10.0-nightly-...-arm64ec
           #   -> installs to imagefs/opt/proton-10.0-nightly-...-arm64ec/
           PROFILE_VERSION="${VERSION#proton-}"
+          CANONICAL_PROTON_WINE_VERSION="Proton-${PROFILE_VERSION}-${VERSION_CODE}"
+          LEGACY_PROTON_WINE_VERSION="proton-${PROFILE_VERSION}-${VERSION_CODE}"
+
+          cat > "$GITHUB_WORKSPACE/output/gamenative-wineversion.txt" <<EOF
+          canonical=${CANONICAL_PROTON_WINE_VERSION}
+          legacy=${LEGACY_PROTON_WINE_VERSION}
+          EOF
 
           # Proton profile ? for standard Winlator / GameNative
           python3 scripts/generate_profile.py \
