@@ -83,10 +83,6 @@ jobs:
           # _NET_WM_PID) via script — the patch is too drifted to apply cleanly.
           python3 scripts/fix_window_c.py wine-source
 
-          # Apply Wow64SuspendLocalThread to wow64/process.c — the upstream patch
-          # is corrupt (CRLF issue), so we add the function directly.
-          python3 scripts/fix_wow64_process_c.py wine-source
-
       - name: Cache termuxfs aarch64
         id: cache-termuxfs
         uses: actions/cache@v4
