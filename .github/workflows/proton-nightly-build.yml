@@ -24,13 +24,21 @@ on:
       wine_ref:
         description: 'Valve wine ref (branch/tag/commit)'
         required: false
-        default: 'bleeding-edge'
+        default: 'proton_10.0'
         type: string
       gamenative_ref:
         description: 'GameNative proton-wine ref (branch/tag/commit)'
         required: false
         default: 'proton_10.0'
         type: string
+      ge_patch_mode:
+        description: 'Apply curated GE donor patch pack'
+        required: false
+        default: 'firstpass'
+        type: choice
+        options:
+          - 'firstpass'
+          - 'off'
       kernel_compat_wcp_url:
         description: 'Optional URL to known-good donor .wcp for kernel32/ntdll overlay'
         required: false
@@ -95,7 +103,7 @@ jobs:
             python3-zstandard \
             patch
 
-      - name: Clone Wine source (ValveSoftware bleeding-edge)
+      - name: Clone Wine source (ValveSoftware proton_10.0 by default)
         run: |
           rm -rf wine-source
           WINE_REF="${{ github.event.inputs.wine_ref || 'bleeding-edge' }}"
@@ -157,15 +165,55 @@ jobs:
           if ! grep -q 'Script rev: 2026-03-06-driftproof-v1' scripts/fix_test_bylaws_chain.py; then echo 'ERROR: stale fix_test_bylaws_chain.py in runner'; exit 97; fi
           python3 scripts/fix_test_bylaws_chain.py wine-source
 
+          GE_PATCH_MODE="${{ github.event.inputs.ge_patch_mode || 'firstpass' }}"
+          if [ "$GE_PATCH_MODE" = "firstpass" ]; then
+            echo "Applying GE donor first-pass patch pack..."
+            GE_PATCH_ROOT="$GITHUB_WORKSPACE/patches/ge-gamenative-firstpass"
+            if [ ! -d "$GE_PATCH_ROOT" ]; then
+              echo "ERROR: missing GE patch root: $GE_PATCH_ROOT"
+              exit 1
+            fi
+
+            GE_PATCHES=(
+              "proton/fix-a-crash-in-ID2D1DeviceContext-if-no-target-is-set.patch"
+              "proton/0001-win32u-add-env-switch-to-disable-wm-decorations.patch"
+              "proton/83-nv_low_latency_wine.patch"
+              "wine-hotfixes/pending/unity_crash_hotfix.patch"
+              "wine-hotfixes/pending/registry_RRF_RT_REG_SZ-RRF_RT_REG_EXPAND_SZ.patch"
+              "wine-hotfixes/pending/ntdll_add_wine_disable_sfn.patch"
+              "wine-hotfixes/pending/NCryptDecrypt_implementation.patch"
+              "wine-hotfixes/pending/webview2.patch"
+              "wine-hotfixes/staging/cryptext-CryptExtOpenCER/0001.patch"
+              "wine-hotfixes/staging/wineboot-ProxySettings/0001.patch"
+              "proton/0001-fshack-Implement-AMD-FSR-upscaler-for-fullscreen-hac.patch"
+            )
+
+            for rel in "${GE_PATCHES[@]}"; do
+              patch="$GE_PATCH_ROOT/$rel"
+              echo "GE PATCH: $rel"
+              if ! git -C wine-source apply --ignore-whitespace -C1 "$patch"; then
+                if git -C wine-source apply --ignore-whitespace -C1 -R --check "$patch" 2>/dev/null; then
+                  echo "GE PATCH already present: $rel"
+                else
+                  echo "ERROR: GE donor patch failed: $rel"
+                  exit 1
+                fi
+              fi
+            done
+          else
+            echo "GE donor patch pack disabled"
+          fi
+
           # Rewrite the baked-in install prefix from the Termux CI path to the
           # Winlator Cmod path that GameNative rewrites at runtime via libredirect.
           # This ensures Wine's hardcoded WINEDLLPATH points somewhere the device can find.
-          APP_ID="${{ github.event.inputs.target_app_id || 'app.gamenative' }}"
-          if [ "$APP_ID" = "com.winlator.cmod" ]; then
-            INSTALL_DIR="/data/data/com.winlator.cmod/files/imagefs/usr/opt/wine"
-          else
-            INSTALL_DIR="/data/data/${APP_ID}/files/imagefs/opt/wine"
-          fi
+          # Always use com.winlator.cmod/usr/../opt/wine — this matches the pattern
+          # in the reference GameNative WCP binary (build-step-arm64ec.sh uses
+          # install_dir=$deps/../opt/wine where deps ends in .../usr).
+          # libredirect rewrites com.winlator.cmod → app.gamenative at runtime.
+          # The usr/../opt/wine pattern means Wine's WINEDLLPATH resolves to
+          # RUNTIME_PATH/../opt/wine/lib = /opt/wine/lib after the rewrite.
+          INSTALL_DIR="/data/data/com.winlator.cmod/files/imagefs/usr/../opt/wine"
           # RUNTIME_PATH is baked into wine's ELF RUNPATH via -Wl,-rpath=
           # It must point somewhere libredirect can rewrite, not com.termux.
           # Use com.winlator.cmod path so libredirect's rewrite rule applies.
@@ -263,59 +311,18 @@ jobs:
 
       - name: Install Proton
         run: |
-          OUTPUT_DIR="$HOME/compiled-files-aarch64"
-          STAGING="$HOME/wine-staging"
-
-          mkdir -p "$OUTPUT_DIR/bin" "$OUTPUT_DIR/lib" "$OUTPUT_DIR/share" "$STAGING"
-
+          # Use build-step-arm64ec.sh --install exactly as GameNative CI does.
+          # The script runs 'make install' (no DESTDIR) into $install_dir, then
+          # copies bin/lib/share into $OUTPUT_DIR=$HOME/compiled-files-aarch64.
           cd wine-source
-          make install DESTDIR="$STAGING" -j$(nproc)
+          bash build-scripts/build-step-arm64ec.sh --install
 
-          echo "=== Staging tree top-level dirs ==="
-          find "$STAGING" -maxdepth 8 -type d | head -40
-
-          # Find where 'make install' actually put the wine binary.
-          # The prefix is baked into the build by build-step-arm64ec.sh and may vary
-          # (e.g. /data/data/com.winlator.cmod/files/imagefs/usr/opt/wine).
-          WINE_BIN=$(find "$STAGING" -type f \( -name "wine64" -o -name "wine" \) | grep -v "\.so\|wine-preloader\|wineserver\|winecfg\|wineboot\|winedbg\|winepath\|winefile\|winemine\|winemapi\|winebrowser\|wineconsole\|winevulkan" | head -1)
-          if [ -z "$WINE_BIN" ]; then
-            echo "ERROR: wine binary not found anywhere in staging tree"
-            exit 1
-          fi
-          STAGED="$(dirname "$(realpath "$WINE_BIN")")/.."
-          STAGED="$(realpath "$STAGED")"
-          echo "=== Found wine install root: $STAGED ==="
-
-          echo "=== STAGED bin contents ==="
-          ls -la "$STAGED/bin/" || echo "(empty)"
-
-          cp -r "$STAGED"/bin/wine*   "$OUTPUT_DIR/bin/" 2>/dev/null || true
-          cp -r "$STAGED"/bin/reg*    "$OUTPUT_DIR/bin/" 2>/dev/null || true
-          cp -r "$STAGED"/bin/msi*    "$OUTPUT_DIR/bin/" 2>/dev/null || true
-          cp -r "$STAGED"/bin/notepad "$OUTPUT_DIR/bin/" 2>/dev/null || true
-          cp -r "$STAGED/lib/wine"    "$OUTPUT_DIR/lib/"
-          cp -r "$STAGED/share/wine"  "$OUTPUT_DIR/share/"
-
-          echo "=== OUTPUT_DIR bin contents after copy ==="
-          ls -la "$OUTPUT_DIR/bin/"
-
-          # Box64 looks for 'wine' in bin/ ? Wine normally installs a 'wine' shell
-          # wrapper. If it's missing (only wine64 present), create a symlink.
-          if [ ! -e "$OUTPUT_DIR/bin/wine" ] && [ -f "$OUTPUT_DIR/bin/wine64" ]; then
-            ln -s wine64 "$OUTPUT_DIR/bin/wine"
-            echo "Created wine -> wine64 symlink"
-          elif [ -e "$OUTPUT_DIR/bin/wine" ]; then
-            echo "wine present: $(file "$OUTPUT_DIR/bin/wine")"
-          else
-            echo "ERROR: neither wine nor wine64 found in $OUTPUT_DIR/bin/ ? build incomplete"
-            exit 1
-          fi
-
-          echo "=== Final OUTPUT_DIR bin contents ==="
+          OUTPUT_DIR="$HOME/compiled-files-aarch64"
+          echo "=== OUTPUT_DIR bin contents ==="
           ls -la "$OUTPUT_DIR/bin/"
           echo "=== wine binary type ==="
-          file "$OUTPUT_DIR/bin/wine"
-          file "$OUTPUT_DIR/bin/wine64" 2>/dev/null || true
+          file "$OUTPUT_DIR/bin/wine" 2>/dev/null || true
+          file "$OUTPUT_DIR/bin/wineserver" 2>/dev/null || true
 
       - name: Download prefixPack.txz
         run: |
@@ -361,40 +368,39 @@ jobs:
 
           mkdir -p "$GITHUB_WORKSPACE/output"
 
-          # WineInfo.java parses the identifier with this regex:
-          #   ^(wine|proton|Proton)-([0-9.]+)(?:-([0-9.]+))?-(x86|x86_64|arm64ec)(?:-([0-9]+))?$
-          # Version must be purely numeric (dots only), arch must be arm64ec/x86_64/x86.
-          # Nightly date/hash go in the description only - not the version string.
-          # GameNative also prepends "proton-" to versionName if it doesn't already
-          # start with "proton", so we omit it here.
-          PROFILE_VERSION="10.0-arm64ec"
-          VERSION_CODE=1
+          # versionName: GameNative installs to /opt/proton-{versionName}/
+          # Use a nightly-specific name so it doesn't collide with stable "10.0-4-arm64ec".
+          # Both Proton and Wine profiles use "wine" as the paths key (confirmed from
+          # GameNative/proton-wine build-proton.yml). Proton versionCode=1, Wine versionCode=0.
+          PROFILE_VERSION="10.0-nightly-arm64ec"
+          PROTON_VERSION_CODE=1
+          WINE_VERSION_CODE=0
 
-          # Proton profile - for standard Winlator / GameNative
+          # Proton profile - for GameNative (XZ-compressed tar, plain .wcp extension)
           python3 scripts/generate_profile.py \
             "${OUTPUT_DIR}/profile.json" \
             "${PROFILE_VERSION}" \
-            "${VERSION_CODE}" \
+            "${PROTON_VERSION_CODE}" \
             "Proton 10 ARM64 nightly ${GIT_DATE} (${GIT_HASH})"
 
           cd "$OUTPUT_DIR"
-          tar --zstd -cf "$GITHUB_WORKSPACE/output/proton-${VERSION}.wcp" \
+          tar cJf "$GITHUB_WORKSPACE/output/proton-${VERSION}.wcp" \
             bin lib share prefixPack.txz profile.json
 
-          # Wine profile - for Winlator CMOD / Ludashi (also installs to /opt/wine/)
+          # Wine profile - for Winlator CMOD / Ludashi (XZ-compressed, .wcp.xz extension)
           python3 "$GITHUB_WORKSPACE/scripts/generate_profile.py" \
             "${OUTPUT_DIR}/profile.json" \
             "${PROFILE_VERSION}" \
-            "${VERSION_CODE}" \
+            "${WINE_VERSION_CODE}" \
             "Proton 10 ARM64 nightly ${GIT_DATE} (${GIT_HASH})" \
             wine
 
-          tar --zstd -cf "$GITHUB_WORKSPACE/output/proton-wine-${VERSION}.wcp" \
+          tar cJf "$GITHUB_WORKSPACE/output/proton-wine-${VERSION}.wcp.xz" \
             bin lib share prefixPack.txz profile.json
 
           cd "$GITHUB_WORKSPACE"
           sha256sum output/proton-${VERSION}.wcp > output/proton-${VERSION}.wcp.sha256
-          sha256sum output/proton-wine-${VERSION}.wcp > output/proton-wine-${VERSION}.wcp.sha256
+          sha256sum output/proton-wine-${VERSION}.wcp.xz > output/proton-wine-${VERSION}.wcp.xz.sha256
 
           ls -lh output/
 
@@ -425,7 +431,7 @@ jobs:
           GIT_DATE=$(git -C wine-source log -1 --format='%cd' --date=format:'%Y%m%d')
           VERSION="proton-10.0-nightly-${GIT_DATE}-${GIT_HASH}-arm64ec"
           WCP_SHA=$(cut -d' ' -f1 output/proton-${VERSION}.wcp.sha256)
-          WCPXZ_SHA=$(cut -d' ' -f1 output/proton-wine-${VERSION}.wcp.sha256)
+          WCPXZ_SHA=$(cut -d' ' -f1 output/proton-wine-${VERSION}.wcp.xz.sha256)
           python3 scripts/generate_latest.py \
             "latest.json" \
             "${VERSION}" \
@@ -433,7 +439,7 @@ jobs:
             "${GIT_HASH}" \
             "proton-${VERSION}.wcp" \
             "${WCP_SHA}" \
-            "proton-wine-${VERSION}.wcp" \
+            "proton-wine-${VERSION}.wcp.xz" \
             "${WCPXZ_SHA}" \
             "nightly-${GIT_DATE}-${GIT_HASH}"
           cat latest.json
@@ -473,3 +479,4 @@ jobs:
           rm -rf "$RUNNER_TEMP"/* || true
           echo "=== Disk usage after cleanup ==="
           df -h
+

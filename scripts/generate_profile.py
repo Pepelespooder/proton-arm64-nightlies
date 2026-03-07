@@ -18,7 +18,8 @@ def main():
     description = sys.argv[4]
     profile_type = "Wine" if len(sys.argv) > 5 and sys.argv[5] == "wine" else "Proton"
 
-    # GameNative expects path keys under "wine" even for Proton type profiles.
+    # GameNative uses "wine" as the paths key for BOTH Proton and Wine type profiles.
+    # Confirmed from GameNative/proton-wine build-proton.yml CI workflow.
     paths_key = "wine"
     profile = {
         "type": profile_type,
