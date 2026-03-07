@@ -1,16 +1,7 @@
 #!/usr/bin/env python3
-"""
-Remove i386 C++ mangled stubs from dlls/wdscore/wdscore.spec.
-
-These stubs (CDynamicArray template methods with @QAE@ i386 calling convention)
-cause lld-link to fail with "Invalid ARM64EC function name" when building the
-aarch64-windows/wdscore.dll target. They were removed by the GameNative
-wdscore patch but filter_patches.py cannot reliably detect whether the patch
-has been applied (no unique positive marker exists in the patched version).
-"""
 import os
+import re
 import sys
-
 
 def main():
     if len(sys.argv) < 2:
@@ -24,32 +15,67 @@ def main():
         print(f"SKIP: {path} not found")
         return 0
 
-    with open(path, errors="replace") as f:
+    with open(path, "r", encoding="utf-8", errors="replace") as f:
         lines = f.readlines()
 
-    kept = []
-    removed = 0
-    for line in lines:
-        # i386 mangled names contain @QAE@, @QBE@, @IAE@ etc. (thiscall conventions)
-        # These are invalid for ARM64EC and must be removed.
-        if "CDynamicArray" in line and ("@QAE@" in line or "@QBE@" in line or
-                                         "@IAE@" in line or "@ABV" in line or
-                                         "@AAV" in line or "@@QAE" in line or
-                                         "@@QBE" in line):
-            removed += 1
-        else:
-            kept.append(line)
+    # Strip mangled C++ CDynamicArray exports/stubs that break ARM64EC linking.
+    bad_patterns = [
+        re.compile(r"CDynamicArray"),
+        re.compile(r"\?\?"),      # MSVC-mangled C++ symbol
+        re.compile(r"@QAE@|@QBE@|@IAE@|@AAV|@ABV|@@QAE|@@QBE"),
+    ]
 
-    if removed == 0:
-        print("OK: no i386 CDynamicArray stubs found in wdscore.spec (already clean)")
+    kept = []
+    removed = []
+
+    for line in lines:
+        if "CDynamicArray" in line and (
+            "??" in line
+            or "@QAE@" in line
+            or "@QBE@" in line
+            or "@IAE@" in line
+            or "@AAV" in line
+            or "@ABV" in line
+            or "@@QAE" in line
+            or "@@QBE" in line
+        ):
+            removed.append(line.rstrip("\n"))
+            continue
+        kept.append(line)
+
+    if not removed:
+        print("OK: no ARM64EC-invalid CDynamicArray stubs found in wdscore.spec")
         return 0
 
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.writelines(kept)
 
-    print(f"FIXED: removed {removed} i386 CDynamicArray stubs from dlls/wdscore/wdscore.spec")
-    return 0
+    print(f"FIXED: removed {len(removed)} bad wdscore.spec lines")
+    for line in removed:
+        print(f"  removed: {line}")
 
+    # Verify cleanup
+    remaining = []
+    for line in kept:
+        if "CDynamicArray" in line and (
+            "??" in line
+            or "@QAE@" in line
+            or "@QBE@" in line
+            or "@IAE@" in line
+            or "@AAV" in line
+            or "@ABV" in line
+            or "@@QAE" in line
+            or "@@QBE" in line
+        ):
+            remaining.append(line.rstrip("\n"))
+
+    if remaining:
+        print("ERROR: wdscore.spec still contains bad CDynamicArray entries")
+        for line in remaining:
+            print(f"  remaining: {line}")
+        return 2
+
+    return 0
 
 if __name__ == "__main__":
     raise SystemExit(main())
