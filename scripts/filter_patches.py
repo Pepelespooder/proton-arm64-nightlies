@@ -37,6 +37,11 @@ ALREADY_APPLIED = {
     "programs_wineboot_wineboot_c.patch":   ("programs/wineboot/wineboot.c", "initialize_xstate_features"),
     "dlls_ntdll_unix_process_c.patch":      ("dlls/ntdll/unix/process.c",    "ProcessFexHardwareTso"),
 
+    # fsync is explicitly disabled on Android by fix_fsync.py, so these
+    # drift-prone patches must not be required for the build to proceed.
+    "dlls_ntdll_unix_fsync_c.patch":        ("dlls/ntdll/unix/fsync.c",      "#if defined(__linux__) && !defined(__ANDROID__)"),
+    "server_fsync_c.patch":                 ("server/fsync.c",                "#if defined(__linux__) && !defined(__ANDROID__)"),
+
     # test-bylaws patches
     "test-bylaws/dlls_ntdll_unwind_h.patch":         ("dlls/ntdll/unwind.h",         ["CONTEXT_ARM64_FEX_YMMSTATE", "CONTEXT_AMD64_XSTATE"]),
     "test-bylaws/include_winnt_h.patch":             ("include/winnt.h",              "CONTEXT_ARM64_FEX_YMMSTATE"),
