@@ -530,7 +530,6 @@ jobs:
           mkdir -p release
           find artifacts -name "*.wcp" -exec cp {} release/ \;
           find artifacts -name "*.wcp.xz" -exec cp {} release/ \;
-          find artifacts -name "*.sha256" -exec cp {} release/ \;
           ls -lah release/
 
       - name: Create GitHub Release
