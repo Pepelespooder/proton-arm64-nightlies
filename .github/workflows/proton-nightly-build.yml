@@ -218,12 +218,10 @@ jobs:
             OPTIONAL_GE_PERF_DIR="wine-source/android/patches/optional-ge-perf"
             OPTIONAL_GE_PERF_PATCH="6559c43-ntdll-validate-fd-type-in-ioctl-afd-wine-complete-async.patch"
             mkdir -p "$OPTIONAL_GE_PERF_DIR"
-            cp ge-second-pass/performance/$OPTIONAL_GE_PERF_PATCH "$OPTIONAL_GE_PERF_DIR/"
+            cp "ge-second-pass/performance/$OPTIONAL_GE_PERF_PATCH" "$OPTIONAL_GE_PERF_DIR/"
             cp "$OPTIONAL_GE_PERF_DIR"/*.patch wine-source/android/patches/
             python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh               "$OPTIONAL_GE_PERF_PATCH"
             python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-x86_64.sh               "$OPTIONAL_GE_PERF_PATCH"
-          fi
-
           fi
 
           python3 scripts/filter_patches.py wine-source/build-scripts/build-step-arm64ec.sh wine-source
