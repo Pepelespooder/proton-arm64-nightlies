@@ -41,6 +41,15 @@ on:
         required: false
         default: false
         type: boolean
+      build_arch:
+        description: 'Architecture to build'
+        required: false
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - x86_64
+          - arm64ec
 
 jobs:
   prepare:
@@ -120,9 +129,11 @@ jobs:
 
     steps:
       - name: Checkout this repo
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         uses: actions/checkout@v4
 
       - name: Free up disk space
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         run: |
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /opt/ghc
@@ -131,6 +142,7 @@ jobs:
           df -h
 
       - name: Set up build environment
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
@@ -162,6 +174,7 @@ jobs:
             patch
 
       - name: Clone Wine source
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         run: |
           rm -rf wine-source
           WINE_REF="${{ github.event.inputs.wine_ref || 'bleeding-edge' }}"
@@ -176,6 +189,7 @@ jobs:
           git -C wine-source rev-parse HEAD
 
       - name: Clone GameNative patches and build scripts
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         run: |
           GN_REF="${{ github.event.inputs.gamenative_ref || 'proton_10.0' }}"
           git clone --depth=1 --branch "$GN_REF" \
@@ -235,20 +249,18 @@ jobs:
           python3 scripts/fix_test_bylaws_chain.py wine-source
 
           PROFILE_VERSION="${{ matrix.profile_version }}"
-          if [ "${{ matrix.arch_id }}" = "arm64ec" ]; then
-            INSTALL_DIR="/data/data/com.winlator.cmod/files/imagefs/opt/proton-${PROFILE_VERSION}"
-            RUNTIME_PATH="/data/data/com.winlator.cmod/files/imagefs/usr"
-            echo "Using profile_version=$PROFILE_VERSION"
-            echo "Using install_dir=$INSTALL_DIR"
-            echo "Using RUNTIME_PATH=$RUNTIME_PATH"
-            sed -i "s|export install_dir=.*|export install_dir=${INSTALL_DIR}|" "wine-source/build-scripts/${{ matrix.build_script }}"
-            sed -i "s|export RUNTIME_PATH=.*|export RUNTIME_PATH=\"${RUNTIME_PATH}\"|" "wine-source/build-scripts/${{ matrix.build_script }}"
-          else
-            echo "Using profile_version=$PROFILE_VERSION"
-            echo "Keeping GameNative default install_dir/RUNTIME_PATH for ${{ matrix.arch_id }}"
-          fi
+          TARGET_APP_ID="${{ github.event.inputs.target_app_id || 'app.gamenative' }}"
+          INSTALL_DIR="/data/data/${TARGET_APP_ID}/files/imagefs/opt/proton-${PROFILE_VERSION}"
+          RUNTIME_PATH="/data/data/${TARGET_APP_ID}/files/imagefs/usr"
+          echo "Using target_app_id=$TARGET_APP_ID"
+          echo "Using profile_version=$PROFILE_VERSION"
+          echo "Using install_dir=$INSTALL_DIR"
+          echo "Using RUNTIME_PATH=$RUNTIME_PATH"
+          sed -i "s|export install_dir=.*|export install_dir=${INSTALL_DIR}|" "wine-source/build-scripts/${{ matrix.build_script }}"
+          sed -i "s|export RUNTIME_PATH=.*|export RUNTIME_PATH=\"${RUNTIME_PATH}\"|" "wine-source/build-scripts/${{ matrix.build_script }}"
 
       - name: Download and extract termuxfs for ${{ matrix.termux_arch }}
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         run: |
           TERMUX_DIR="$HOME/termuxfs/${{ matrix.termux_arch }}"
           if [ ! -d "$TERMUX_DIR/data/data/com.termux/files/usr/include" ]; then
@@ -263,6 +275,7 @@ jobs:
           fi
 
       - name: Set up Android NDK
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         run: |
           NDK_DIR="$HOME/Android/Sdk/ndk/27.3.13750724"
           if [ ! -d "$NDK_DIR" ]; then
@@ -277,6 +290,7 @@ jobs:
           fi
 
       - name: Set up LLVM MinGW toolchain
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         run: |
           LLVM_DIR="$HOME/toolchains/llvm-mingw-20250920-ucrt-ubuntu-22.04-x86_64"
           if [ ! -f "$LLVM_DIR/bin/llvm-dlltool" ]; then
@@ -290,15 +304,18 @@ jobs:
           fi
 
       - name: Add bylaws llvm-mingw to PATH
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         run: |
           echo "$HOME/toolchains/llvm-mingw-20250920-ucrt-ubuntu-22.04-x86_64/bin" >> "$GITHUB_PATH"
 
       - name: Run autogen.sh
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         run: |
           cd wine-source
           bash autogen.sh
 
       - name: Cache wine-tools
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         id: cache-wine-tools
         uses: actions/cache@v4
         with:
@@ -322,6 +339,7 @@ jobs:
           bash "build-scripts/${{ matrix.build_script }}" --build-sysvshm
 
       - name: Configure build
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         id: configure_build
         continue-on-error: true
         run: |
@@ -346,21 +364,23 @@ jobs:
           exit 1
 
       - name: Verify critical patch markers
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         run: |
           python3 scripts/verify_required_markers.py wine-source
 
       - name: Build Proton
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         run: |
           cd wine-source
           bash "build-scripts/${{ matrix.build_script }}" --build
 
       - name: Install Proton
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         run: |
           PROFILE_VERSION="${{ matrix.profile_version }}"
-          if [ "${{ matrix.arch_id }}" = "arm64ec" ]; then
-            sudo mkdir -p "/data/data/com.winlator.cmod/files/imagefs/opt/proton-${PROFILE_VERSION}"
-            sudo chmod -R 777 /data/data
-          fi
+          TARGET_APP_ID="${{ github.event.inputs.target_app_id || 'app.gamenative' }}"
+          sudo mkdir -p "/data/data/${TARGET_APP_ID}/files/imagefs/opt/proton-${PROFILE_VERSION}"
+          sudo chmod -R 777 /data/data
 
           cd wine-source
           bash "build-scripts/${{ matrix.build_script }}" --install
@@ -373,11 +393,13 @@ jobs:
           file "$OUTPUT_DIR/bin/wineserver" 2>/dev/null || true
 
       - name: Download prefixPack.txz
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         run: |
           wget -q "https://github.com/GameNative/bionic-prefix-files/raw/main/${{ matrix.prefix_pack }}" \
             -O "$HOME/${{ matrix.output_dir }}/prefixPack.txz"
 
       - name: Generate profile.json files and package
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         run: |
           OUTPUT_DIR="$HOME/${{ matrix.output_dir }}"
           GIT_HASH=$(git -C wine-source rev-parse --short HEAD)
@@ -437,6 +459,7 @@ jobs:
           ls -lh output/
 
       - name: Upload artifacts
+        if: ${{ github.event.inputs.build_arch == '' || github.event.inputs.build_arch == 'both' || github.event.inputs.build_arch == matrix.arch_id }}
         uses: actions/upload-artifact@v4
         with:
           name: proton-bleeding-edge-${{ matrix.arch_id }}
