@@ -1,22 +1,21 @@
 diff --git a/dlls/winex11.drv/event.c b/dlls/winex11.drv/event.c
-index 541eee1..d0a352f 100644
+index 7e736df..d618a22 100644
 --- a/dlls/winex11.drv/event.c
 +++ b/dlls/winex11.drv/event.c
-@@ -978,8 +978,14 @@ static void focus_out( Display *display , HWND hwnd )
+@@ -972,8 +972,12 @@ static void focus_out( Display *display , HWND hwnd )
             case we don't have to change the foreground window to 0 */
          if (hwnd == NtUserGetForegroundWindow())
          {
--            TRACE( "lost focus, setting fg to desktop\n" );
 +#ifdef __ANDROID__
 +            TRACE( "lost focus on Android, preserving foreground window\n" );
 +#else
-+            TRACE( "lost focus, setting fg to desktop\n" );
+             TRACE( "lost focus, setting fg to desktop\n" );
              NtUserSetForegroundWindow( NtUserGetDesktopWindow() );
 +#endif
          }
      }
   }
-@@ -1119,9 +1125,13 @@ static BOOL X11DRV_MapNotify( HWND hwnd, XEvent *event )
+@@ -1113,9 +1117,13 @@ static BOOL X11DRV_MapNotify( HWND hwnd, XEvent *event )
  
      if (!data->managed && !data->embedded && data->desired_state.wm_state != WithdrawnState)
      {
@@ -30,3 +29,9 @@ index 541eee1..d0a352f 100644
      }
      release_win_data( data );
      return TRUE;
+@@ -1828,3 +1836,4 @@ static BOOL X11DRV_ClientMessage( HWND hwnd, XEvent *xev )
+     TRACE( "no handler found for %ld\n", event->message_type );
+     return FALSE;
+ }
++
+
