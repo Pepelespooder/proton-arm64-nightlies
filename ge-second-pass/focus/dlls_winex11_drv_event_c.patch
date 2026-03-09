@@ -8,11 +8,9 @@ index 541eee1..d0a352f 100644
          {
 -            TRACE( "lost focus, setting fg to desktop\n" );
 +#ifdef __ANDROID__
-+            TRACE( "lost focus on Android, preserving foreground window
-+" );
++            TRACE( "lost focus on Android, preserving foreground window\n" );
 +#else
-+            TRACE( "lost focus, setting fg to desktop
-+" );
++            TRACE( "lost focus, setting fg to desktop\n" );
              NtUserSetForegroundWindow( NtUserGetDesktopWindow() );
 +#endif
          }
