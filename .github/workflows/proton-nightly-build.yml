@@ -238,23 +238,20 @@ jobs:
           if [ "${{ inputs.ge_perf_second_pass && 'true' || 'false' }}" = "true" ]; then
             OPTIONAL_GE_PERF_DIR="wine-source/android/patches/optional-ge-perf"
             OPTIONAL_GE_PERF_PATCH="6559c43-ntdll-validate-fd-type-in-ioctl-afd-wine-complete-async.patch"
-            OPTIONAL_GE_KEYBOARD_PATCH="dlls_winex11_drv_keyboard_c.patch"
             OPTIONAL_GE_EVENT_PATCH="dlls_winex11_drv_event_c.patch"
             mkdir -p "$OPTIONAL_GE_PERF_DIR"
             cp "ge-second-pass/performance/$OPTIONAL_GE_PERF_PATCH" "$OPTIONAL_GE_PERF_DIR/"
-            cp "ge-second-pass/keyboard/$OPTIONAL_GE_KEYBOARD_PATCH" "$OPTIONAL_GE_PERF_DIR/"
             cp "ge-second-pass/focus/$OPTIONAL_GE_EVENT_PATCH" "$OPTIONAL_GE_PERF_DIR/"
             cp "$OPTIONAL_GE_PERF_DIR"/*.patch wine-source/android/patches/
             cp "ge-second-pass/mouse/dlls_winex11_drv_mouse_c.patch" "wine-source/android/patches/dlls_winex11_drv_mouse_c.patch"
-            python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh               "$OPTIONAL_GE_PERF_PATCH"               "$OPTIONAL_GE_KEYBOARD_PATCH"               "$OPTIONAL_GE_EVENT_PATCH"
-            python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-x86_64.sh               "$OPTIONAL_GE_PERF_PATCH"               "$OPTIONAL_GE_KEYBOARD_PATCH"               "$OPTIONAL_GE_EVENT_PATCH"
+            python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh               "$OPTIONAL_GE_PERF_PATCH"               "$OPTIONAL_GE_EVENT_PATCH"
+            python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-x86_64.sh               "$OPTIONAL_GE_PERF_PATCH"               "$OPTIONAL_GE_EVENT_PATCH"
           fi
 
           if [ "${{ inputs.android_directinput_keyboard_workaround && 'true' || 'false' }}" = "true" ]; then
             OPTIONAL_ANDROID_DI_KEYBOARD_PATCH="dlls_winex11_drv_keyboard_directinput_c.patch"
             cp "ge-second-pass/keyboard/$OPTIONAL_ANDROID_DI_KEYBOARD_PATCH" "wine-source/android/patches/$OPTIONAL_ANDROID_DI_KEYBOARD_PATCH"
             python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh "$OPTIONAL_ANDROID_DI_KEYBOARD_PATCH"
-            python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-x86_64.sh "$OPTIONAL_ANDROID_DI_KEYBOARD_PATCH"
             echo "=== Android DirectInput keyboard workaround applied ==="
             printf '%s\n' "$OPTIONAL_ANDROID_DI_KEYBOARD_PATCH"
           fi
@@ -664,6 +661,9 @@ jobs:
           rm -rf "$RUNNER_TEMP"/* || true
           echo "=== Disk usage after cleanup ==="
           df -h
+
+
+
 
 
 
