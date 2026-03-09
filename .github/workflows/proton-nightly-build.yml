@@ -190,11 +190,14 @@ jobs:
 
           rm -f wine-source/android/patches/dlls_wow64_syscall_c.patch
           rm -f wine-source/android/patches/test-bylaws/dlls_wow64_syscall_c.patch
+          rm -f wine-source/android/patches/test-bylaws/dlls_ntdll_signal_arm64ec_c.patch
           mkdir -p wine-source/android/patches/test-bylaws
           cp "ge-second-pass/test-bylaws/dlls_wow64_syscall_c.patch" \
             "wine-source/android/patches/dlls_wow64_syscall_c.patch"
           cp "ge-second-pass/test-bylaws/dlls_wow64_syscall_c.patch" \
             "wine-source/android/patches/test-bylaws/dlls_wow64_syscall_c.patch"
+          cp "ge-second-pass/test-bylaws/dlls_ntdll_signal_arm64ec_c.patch" \
+            "wine-source/android/patches/test-bylaws/dlls_ntdll_signal_arm64ec_c.patch"
 
           find wine-source/android/patches -type f -name "*.patch" -exec sed -i 's/\r$//' {} +
           sed -i 's/atoi("WINE_X11FORCEGLX")/atoi(getenv("WINE_X11FORCEGLX"))/g' \
@@ -249,6 +252,8 @@ jobs:
           python3 scripts/fix_fsync.py wine-source
           python3 scripts/fix_suspend_chain.py wine-source
 
+          echo "=== repo-owned BYLAWS overrides ==="
+          ls -la wine-source/android/patches/test-bylaws | grep -E 'dlls_(wow64_syscall|ntdll_signal_arm64ec)_c\.patch' || true
           echo "=== fix_test_bylaws_chain.py header ==="
           sed -n '1,40p' scripts/fix_test_bylaws_chain.py
           if ! grep -q 'Script rev: 2026-03-07-driftproof-v2' scripts/fix_test_bylaws_chain.py; then echo 'ERROR: stale fix_test_bylaws_chain.py in runner'; exit 97; fi
@@ -627,6 +632,8 @@ jobs:
           rm -rf "$RUNNER_TEMP"/* || true
           echo "=== Disk usage after cleanup ==="
           df -h
+
+
 
 
 
