@@ -258,6 +258,10 @@ jobs:
           sed -n '1,40p' scripts/fix_test_bylaws_chain.py
           if ! grep -q 'Script rev: 2026-03-07-driftproof-v2' scripts/fix_test_bylaws_chain.py; then echo 'ERROR: stale fix_test_bylaws_chain.py in runner'; exit 97; fi
           python3 scripts/fix_test_bylaws_chain.py wine-source
+          echo "=== BYLAWS patches applied ==="
+          printf '%s\n' \
+            'dlls_wow64_syscall_c.patch (repo-owned override copied to android/patches and test-bylaws)' \
+            'test-bylaws/dlls_ntdll_signal_arm64ec_c.patch (repo-owned override copied to test-bylaws)'
 
           PROFILE_VERSION="${{ matrix.profile_version }}"
           TARGET_APP_ID="${{ github.event.inputs.target_app_id || 'app.gamenative' }}"
@@ -632,6 +636,7 @@ jobs:
           rm -rf "$RUNNER_TEMP"/* || true
           echo "=== Disk usage after cleanup ==="
           df -h
+
 
 
 
