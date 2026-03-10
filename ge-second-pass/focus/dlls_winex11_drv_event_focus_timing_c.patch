@@ -1,0 +1,48 @@
+diff --git a/dlls/winex11.drv/event.c b/dlls/winex11.drv/event.c
+index 541eee1..1e206ff 100644
+--- a/dlls/winex11.drv/event.c
++++ b/dlls/winex11.drv/event.c
+@@ -699,6 +699,9 @@ static void set_focus( Display *display, HWND focus, Time time )
+     wait_grab_pointer( display );
+ 
+     TRACE( "setting foreground window to %p\n", focus );
++#ifdef __ANDROID__
++    NtUserSetForegroundWindow( focus );
++#else
+ 
+     if (X11DRV_HasWindowManager( "steamcompmgr" ) || !is_net_supported( x11drv_atom(_NET_ACTIVE_WINDOW) ))
+     {
+@@ -711,6 +714,7 @@ static void set_focus( Display *display, HWND focus, Time time )
+         if (focus) focus = NtUserGetAncestor( focus, GA_ROOT );
+     }
+ 
++#endif
+     if ((win = X11DRV_get_whole_window( focus )))
+     {
+         TRACE( "setting focus to %p (%lx) time=%ld\n", focus, win, time );
+@@ -969,8 +973,12 @@ static void focus_out( Display *display , HWND hwnd )
+     /* don't reset the foreground window, if the window which is
+        getting the focus is a Wine window */
+ 
++#ifdef __ANDROID__
++    if (!is_current_process_focused())
++#else
+     if ((X11DRV_HasWindowManager( "steamcompmgr" ) || !is_net_supported( x11drv_atom(_NET_ACTIVE_WINDOW) ))
+             && !is_current_process_focused())
++#endif
+     {
+         /* Abey : 6-Oct-99. Check again if the focus out window is the
+            Foreground window, because in most cases the messages sent
+@@ -1117,7 +1125,11 @@ static BOOL X11DRV_MapNotify( HWND hwnd, XEvent *event )
+ 
+     if (!(data = get_win_data( hwnd ))) return FALSE;
+ 
++#ifdef __ANDROID__
++    if (!data->managed && !data->embedded && data->mapped)
++#else
+     if (!data->managed && !data->embedded && data->desired_state.wm_state != WithdrawnState)
++#endif
+     {
+         HWND hwndFocus = get_focus();
+         if (hwndFocus && NtUserIsChild( hwnd, hwndFocus ))
+

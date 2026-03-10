@@ -51,8 +51,8 @@ on:
         required: false
         default: false
         type: boolean
-      proton9_input_focus_workaround:
-        description: 'Apply Android-only Proton 9 style X11 focus fallback patch'
+      proton9_focus_timing_workaround:
+        description: 'Apply Android-only Proton 9 style X11 focus timing patch'
         required: false
         default: false
         type: boolean
@@ -243,14 +243,20 @@ jobs:
           if [ "${{ inputs.ge_perf_second_pass && 'true' || 'false' }}" = "true" ]; then
             OPTIONAL_GE_PERF_DIR="wine-source/android/patches/optional-ge-perf"
             OPTIONAL_GE_PERF_PATCH="6559c43-ntdll-validate-fd-type-in-ioctl-afd-wine-complete-async.patch"
-            OPTIONAL_GE_EVENT_PATCH="dlls_winex11_drv_event_c.patch"
             mkdir -p "$OPTIONAL_GE_PERF_DIR"
             cp "ge-second-pass/performance/$OPTIONAL_GE_PERF_PATCH" "$OPTIONAL_GE_PERF_DIR/"
-            cp "ge-second-pass/focus/$OPTIONAL_GE_EVENT_PATCH" "$OPTIONAL_GE_PERF_DIR/"
-            cp "$OPTIONAL_GE_PERF_DIR"/*.patch wine-source/android/patches/
             cp "ge-second-pass/mouse/dlls_winex11_drv_mouse_c.patch" "wine-source/android/patches/dlls_winex11_drv_mouse_c.patch"
-            python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh               "$OPTIONAL_GE_PERF_PATCH"               "$OPTIONAL_GE_EVENT_PATCH"
-            python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-x86_64.sh               "$OPTIONAL_GE_PERF_PATCH"               "$OPTIONAL_GE_EVENT_PATCH"
+            if [ "${{ inputs.proton9_focus_timing_workaround && 'true' || 'false' }}" != "true" ]; then
+              OPTIONAL_GE_EVENT_PATCH="dlls_winex11_drv_event_c.patch"
+              cp "ge-second-pass/focus/$OPTIONAL_GE_EVENT_PATCH" "$OPTIONAL_GE_PERF_DIR/"
+              cp "$OPTIONAL_GE_PERF_DIR"/*.patch wine-source/android/patches/
+              python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh               "$OPTIONAL_GE_PERF_PATCH"               "$OPTIONAL_GE_EVENT_PATCH"
+              python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-x86_64.sh               "$OPTIONAL_GE_PERF_PATCH"               "$OPTIONAL_GE_EVENT_PATCH"
+            else
+              cp "$OPTIONAL_GE_PERF_DIR"/*.patch wine-source/android/patches/
+              python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh "$OPTIONAL_GE_PERF_PATCH"
+              python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-x86_64.sh "$OPTIONAL_GE_PERF_PATCH"
+            fi
           fi
 
           if [ "${{ inputs.android_directinput_keyboard_workaround && 'true' || 'false' }}" = "true" ]; then
@@ -268,6 +274,14 @@ jobs:
             python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-x86_64.sh "$OPTIONAL_P9_FOCUS_PATCH"
             echo "=== Proton 9 input focus workaround applied ==="
             printf '%s\n' "$OPTIONAL_P9_FOCUS_PATCH"
+          fi
+
+          if [ "${{ inputs.proton9_focus_timing_workaround && 'true' || 'false' }}" = "true" ]; then
+            OPTIONAL_P9_FOCUS_TIMING_PATCH="dlls_winex11_drv_event_focus_timing_c.patch"
+            cp "ge-second-pass/focus/$OPTIONAL_P9_FOCUS_TIMING_PATCH" "wine-source/android/patches/$OPTIONAL_P9_FOCUS_TIMING_PATCH"
+            python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh "$OPTIONAL_P9_FOCUS_TIMING_PATCH"
+            echo "=== Proton 9 focus timing workaround applied ==="
+            printf '%s\n' "$OPTIONAL_P9_FOCUS_TIMING_PATCH"
           fi
 
           if [ "${{ inputs.proton9_event_queue_filter_workaround && 'true' || 'false' }}" = "true" ]; then
@@ -701,6 +715,7 @@ jobs:
           rm -rf "$RUNNER_TEMP"/* || true
           echo "=== Disk usage after cleanup ==="
           df -h
+
 
 
 
