@@ -62,6 +62,12 @@ on:
         default: false
         type: boolean
 
+      proton10_net_active_window_workaround:
+        description: 'Apply Android-only Proton 10 style _NET_ACTIVE_WINDOW focus tracking workaround'
+        required: false
+        default: false
+        type: boolean
+
 
       proton9_event_queue_filter_workaround:
         description: 'Apply Android-only Proton 9 style X11 event queue filter patch'
@@ -299,6 +305,12 @@ jobs:
             python3 scripts/fix_window_delay.py wine-source
             echo "=== Proton 10 window delay workaround applied ==="
             printf '%s\n' 'scripts/fix_window_delay.py'
+          fi
+
+          if [ "${{ inputs.proton10_net_active_window_workaround && 'true' || 'false' }}" = "true" ]; then
+            python3 scripts/fix_net_active_window.py wine-source
+            echo "=== Proton 10 net active window workaround applied ==="
+            printf '%s\n' 'scripts/fix_net_active_window.py'
           fi
 
           if [ "${{ inputs.proton9_event_queue_filter_workaround && 'true' || 'false' }}" = "true" ]; then
