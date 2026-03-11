@@ -270,16 +270,16 @@ jobs:
             "wine-source/android/patches/test-bylaws/dlls_wow64_syscall_c.patch"
           cp "ge-second-pass/test-bylaws/dlls_ntdll_signal_arm64ec_c.patch" \
             "wine-source/android/patches/test-bylaws/dlls_ntdll_signal_arm64ec_c.patch"
-          cp "patches/ge-gamenative-firstpass/shell32/shell32_mycomputer_null_pidl_getdisplayname.patch" \
-            "wine-source/android/patches/shell32_mycomputer_null_pidl_getdisplayname.patch"
+          cp "patches/ge-gamenative-firstpass/shell32/shell32_shlfileop_init_path_components.patch" \
+            "wine-source/android/patches/shell32_shlfileop_init_path_components.patch"
 
           find wine-source/android/patches -type f -name "*.patch" -exec sed -i 's/\r$//' {} +
           sed -i 's/atoi("WINE_X11FORCEGLX")/atoi(getenv("WINE_X11FORCEGLX"))/g' \
             wine-source/android/patches/dlls_winex11_drv_opengl_c.patch
           python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh \
-            shell32_mycomputer_null_pidl_getdisplayname.patch
+            shell32_shlfileop_init_path_components.patch
           python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-x86_64.sh \
-            shell32_mycomputer_null_pidl_getdisplayname.patch
+            shell32_shlfileop_init_path_components.patch
 
           if [ "${{ github.event.inputs.extra_winebus_patches || 'false' }}" = "true" ]; then
             OPTIONAL_WINEBUS_BASE="https://raw.githubusercontent.com/GloriousEggroll/proton-ge-custom/master/patches/wine-hotfixes/wine-wayland"
@@ -525,6 +525,7 @@ jobs:
 
           cp -f wine-source/dlls/shell32/shfldr_mycomp.c "$BUNDLE_DIR/"
           cp -f wine-source/dlls/shell32/shlfolder.c "$BUNDLE_DIR/"
+          cp -f wine-source/dlls/shell32/shlfileop.c "$BUNDLE_DIR/"
           cp -f wine-source/dlls/shell32/pidl.c "$BUNDLE_DIR/"
           cp -f wine-source/dlls/shell32/shfldr_fs.c "$BUNDLE_DIR/"
           cp -f wine-source/dlls/shell32/Makefile.in "$BUNDLE_DIR/"
@@ -532,7 +533,7 @@ jobs:
           cp -f wine-source/dlls/shell32/aarch64-windows/shell32.dll "$BUNDLE_DIR/aarch64-windows/"
           cp -f wine-source/dlls/shell32/aarch64-windows/*.o "$BUNDLE_DIR/aarch64-windows/" 2>/dev/null || true
           cp -f wine-source/dlls/shell32/arm64ec-windows/*.o "$BUNDLE_DIR/arm64ec-windows/" 2>/dev/null || true
-          cp -f wine-source/android/patches/shell32_mycomputer_null_pidl_getdisplayname.patch "$BUNDLE_DIR/android-patches/" 2>/dev/null || true
+          cp -f wine-source/android/patches/shell32_shlfileop_init_path_components.patch "$BUNDLE_DIR/android-patches/" 2>/dev/null || true
           git -C wine-source rev-parse HEAD > "$BUNDLE_DIR/wine_commit.txt"
 
       - name: Install Proton
@@ -825,6 +826,7 @@ jobs:
           rm -rf "$RUNNER_TEMP"/* || true
           echo "=== Disk usage after cleanup ==="
           df -h
+
 
 
 

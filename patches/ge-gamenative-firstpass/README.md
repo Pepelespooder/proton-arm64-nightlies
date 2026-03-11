@@ -20,7 +20,7 @@ Intent:
 6. `wine-hotfixes/pending/ntdll_add_wine_disable_sfn.patch`
 7. `wine-hotfixes/pending/NCryptDecrypt_implementation.patch`
 8. `wine-hotfixes/pending/webview2.patch`
-9. `shell32/shell32_mycomputer_null_pidl_getdisplayname.patch`
+9. `shell32/shell32_shlfileop_init_path_components.patch`
 10. `wine-hotfixes/staging/cryptext-CryptExtOpenCER/0001.patch`
 11. `wine-hotfixes/staging/wineboot-ProxySettings/0001.patch`
 12. `proton/0001-fshack-Implement-AMD-FSR-upscaler-for-fullscreen-hac.patch`
@@ -46,3 +46,4 @@ Apply in this order:
 
 - `0001-fshack-Implement-AMD-FSR-upscaler-for-fullscreen-hac.patch` is intentionally included but should be treated as optional until the smaller set builds and runs cleanly.
 - If build drift becomes too high, split this pack again into `core` and `optional`.
+
