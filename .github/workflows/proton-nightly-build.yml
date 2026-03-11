@@ -297,7 +297,7 @@ jobs:
               0106-winebus-remove-duplicate-code.patch
           fi
 
-          if [ "${{ inputs.ge_perf_second_pass && 'true' || 'false' }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.ge_perf_second_pass && 'true' || 'false' }}" = "true" ]; then
             OPTIONAL_GE_PERF_DIR="wine-source/android/patches/optional-ge-perf"
             OPTIONAL_GE_PERF_PATCH="6559c43-ntdll-validate-fd-type-in-ioctl-afd-wine-complete-async.patch"
             OPTIONAL_GE_EVENT_PATCH="dlls_winex11_drv_event_c.patch"
@@ -318,7 +318,7 @@ jobs:
             fi
           fi
 
-          if [ "${{ inputs.android_directinput_keyboard_workaround && 'true' || 'false' }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.android_directinput_keyboard_workaround && 'true' || 'false' }}" = "true" ]; then
             OPTIONAL_ANDROID_DI_KEYBOARD_PATCH="dlls_winex11_drv_keyboard_directinput_c.patch"
             cp "ge-second-pass/keyboard/$OPTIONAL_ANDROID_DI_KEYBOARD_PATCH" "wine-source/android/patches/$OPTIONAL_ANDROID_DI_KEYBOARD_PATCH"
             python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh "$OPTIONAL_ANDROID_DI_KEYBOARD_PATCH"
@@ -327,19 +327,41 @@ jobs:
           fi
 
 
-          if [ "${{ inputs.proton10_window_delay_workaround && 'true' || 'false' }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.proton10_window_delay_workaround && 'true' || 'false' }}" = "true" ]; then
             python3 scripts/fix_window_delay.py wine-source
             echo "=== Proton 10 window delay workaround applied ==="
             printf '%s\n' 'scripts/fix_window_delay.py'
           fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && ( [ "${{ inputs.goldberg_net_active_workaround && 'true' || 'false' }}" = "true" ] || [ "${{ inputs.goldberg_event_compat_workaround && 'true' || 'false' }}" = "true" ] ); then
+            OPTIONAL_GE_EVENT_PATCH="dlls_winex11_drv_event_c.patch"
+            OPTIONAL_GOLDBERG_EVENT_PATCH="dlls_winex11_drv_event_goldberg_c.patch"
+            cp "ge-second-pass/focus/$OPTIONAL_GOLDBERG_EVENT_PATCH" "wine-source/android/patches/$OPTIONAL_GOLDBERG_EVENT_PATCH"
+            if [ "${{ inputs.proton10_net_active_window_workaround && 'true' || 'false' }}" != "true" ]; then
+              cp "ge-second-pass/focus/$OPTIONAL_GE_EVENT_PATCH" "wine-source/android/patches/$OPTIONAL_GE_EVENT_PATCH"
+              python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh "$OPTIONAL_GE_EVENT_PATCH"
+              python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-x86_64.sh "$OPTIONAL_GE_EVENT_PATCH"
+            else
+              echo "=== Skipping base GE event.c patch because proton10_net_active_window_workaround is enabled ==="
+            fi
+            python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh "$OPTIONAL_GOLDBERG_EVENT_PATCH"
+            python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-x86_64.sh "$OPTIONAL_GOLDBERG_EVENT_PATCH"
+            echo "=== Goldberg event workaround patch stack applied ==="
+            printf '%s\n' "$OPTIONAL_GOLDBERG_EVENT_PATCH"
+          fi
 
-          if [ "${{ inputs.proton10_net_active_window_workaround && 'true' || 'false' }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.goldberg_hwnd_mapping_workaround && 'true' || 'false' }}" = "true" ]; then
+            python3 scripts/fix_goldberg_hwnd_mapping.py wine-source
+            echo "=== Goldberg hwnd mapping workaround applied ==="
+            printf '%s\n' 'scripts/fix_goldberg_hwnd_mapping.py'
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.proton10_net_active_window_workaround && 'true' || 'false' }}" = "true" ]; then
             python3 scripts/fix_net_active_window.py wine-source
             echo "=== Proton 10 net active window workaround applied ==="
             printf '%s\n' 'scripts/fix_net_active_window.py'
           fi
 
-          if [ "${{ inputs.goldberg_net_active_workaround && 'true' || 'false' }}" = "true" ] || [ "${{ inputs.goldberg_event_compat_workaround && 'true' || 'false' }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && ( [ "${{ inputs.goldberg_net_active_workaround && 'true' || 'false' }}" = "true" ] || [ "${{ inputs.goldberg_event_compat_workaround && 'true' || 'false' }}" = "true" ] ); then
             OPTIONAL_GE_EVENT_PATCH="dlls_winex11_drv_event_c.patch"
             OPTIONAL_GOLDBERG_EVENT_PATCH="dlls_winex11_drv_event_goldberg_c.patch"
             cp "ge-second-pass/focus/$OPTIONAL_GE_EVENT_PATCH" "wine-source/android/patches/$OPTIONAL_GE_EVENT_PATCH"
@@ -350,13 +372,13 @@ jobs:
             printf '%s\n' "$OPTIONAL_GE_EVENT_PATCH" "$OPTIONAL_GOLDBERG_EVENT_PATCH"
           fi
 
-          if [ "${{ inputs.goldberg_hwnd_mapping_workaround && 'true' || 'false' }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.goldberg_hwnd_mapping_workaround && 'true' || 'false' }}" = "true" ]; then
             python3 scripts/fix_goldberg_hwnd_mapping.py wine-source
             echo "=== Goldberg hwnd mapping workaround applied ==="
             printf '%s\n' 'scripts/fix_goldberg_hwnd_mapping.py'
           fi
 
-          if [ "${{ inputs.proton9_event_queue_filter_workaround && 'true' || 'false' }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.proton9_event_queue_filter_workaround && 'true' || 'false' }}" = "true" ]; then
             OPTIONAL_P9_EVENT_QUEUE_PATCH="dlls_winex11_drv_event_queue_filter_c.patch"
             cp "ge-second-pass/focus/$OPTIONAL_P9_EVENT_QUEUE_PATCH" "wine-source/android/patches/$OPTIONAL_P9_EVENT_QUEUE_PATCH"
             python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh "$OPTIONAL_P9_EVENT_QUEUE_PATCH"
