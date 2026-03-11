@@ -80,6 +80,12 @@ on:
         default: false
         type: boolean
 
+      goldberg_event_compat_workaround:
+        description: 'Apply broader Android-only Proton 10 style event compatibility handling for Goldberg/helper-window cases'
+        required: false
+        default: false
+        type: boolean
+
 
       proton9_event_queue_filter_workaround:
         description: 'Apply Android-only Proton 9 style X11 event queue filter patch'
@@ -335,6 +341,12 @@ jobs:
             python3 scripts/fix_goldberg_hwnd_mapping.py wine-source
             echo "=== Goldberg hwnd mapping workaround applied ==="
             printf '%s\n' 'scripts/fix_goldberg_hwnd_mapping.py'
+          fi
+
+          if [ "${{ inputs.goldberg_event_compat_workaround && 'true' || 'false' }}" = "true" ]; then
+            python3 scripts/fix_goldberg_event_compat.py wine-source
+            echo "=== Goldberg event compat workaround applied ==="
+            printf '%s\n' 'scripts/fix_goldberg_event_compat.py'
           fi
 
           if [ "${{ inputs.proton9_event_queue_filter_workaround && 'true' || 'false' }}" = "true" ]; then
