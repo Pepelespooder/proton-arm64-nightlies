@@ -303,11 +303,19 @@ jobs:
             OPTIONAL_GE_EVENT_PATCH="dlls_winex11_drv_event_c.patch"
             mkdir -p "$OPTIONAL_GE_PERF_DIR"
             cp "ge-second-pass/performance/$OPTIONAL_GE_PERF_PATCH" "$OPTIONAL_GE_PERF_DIR/"
-            cp "ge-second-pass/focus/$OPTIONAL_GE_EVENT_PATCH" "$OPTIONAL_GE_PERF_DIR/"
             cp "$OPTIONAL_GE_PERF_DIR"/*.patch wine-source/android/patches/
             cp "ge-second-pass/mouse/dlls_winex11_drv_mouse_c.patch" "wine-source/android/patches/dlls_winex11_drv_mouse_c.patch"
-            python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh               "$OPTIONAL_GE_PERF_PATCH"               "$OPTIONAL_GE_EVENT_PATCH"
-            python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-x86_64.sh               "$OPTIONAL_GE_PERF_PATCH"               "$OPTIONAL_GE_EVENT_PATCH"
+            python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh "$OPTIONAL_GE_PERF_PATCH"
+            python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-x86_64.sh "$OPTIONAL_GE_PERF_PATCH"
+            if [ "${{ inputs.proton10_net_active_window_workaround && 'true' || 'false' }}" != "true" ] && [ "${{ inputs.goldberg_net_active_workaround && 'true' || 'false' }}" != "true" ] && [ "${{ inputs.goldberg_event_compat_workaround && 'true' || 'false' }}" != "true" ]; then
+              cp "ge-second-pass/focus/$OPTIONAL_GE_EVENT_PATCH" "$OPTIONAL_GE_PERF_DIR/"
+              cp "$OPTIONAL_GE_PERF_DIR/$OPTIONAL_GE_EVENT_PATCH" wine-source/android/patches/
+              python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh "$OPTIONAL_GE_EVENT_PATCH"
+              python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-x86_64.sh "$OPTIONAL_GE_EVENT_PATCH"
+            else
+              echo "=== Skipping optional base event.c patch because another event.c path is enabled ==="
+              printf '%s\n' "$OPTIONAL_GE_EVENT_PATCH skipped"
+            fi
           fi
 
           if [ "${{ inputs.android_directinput_keyboard_workaround && 'true' || 'false' }}" = "true" ]; then
