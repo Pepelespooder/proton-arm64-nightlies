@@ -16,6 +16,7 @@ index 6d59de4..1656626 100644
  
  static RECT clip_rect;
 +static POINT clip_center;  /* center of clipping rect for relative motion synthesis */
++static POINT clip_center_root;  /* same point in X root coordinates for warping / deltas */
 +static BOOL needs_relative_motion;  /* TRUE when game wants clipping but xinput2 unavailable */
  static Cursor create_cursor( HANDLE handle );
  
@@ -95,7 +96,11 @@ index 6d59de4..1656626 100644
 +        clip_rect = *clip;
 +        clip_center.x = (clip->left + clip->right) / 2;
 +        clip_center.y = (clip->top + clip->bottom) / 2;
++        clip_center_root = virtual_screen_to_root( clip_center.x, clip_center.y );
 +        needs_relative_motion = TRUE;
++        XWarpPointer( data->display, None, root_window, 0, 0, 0, 0, clip_center_root.x, clip_center_root.y );
++        data->warp_serial = NextRequest( data->display );
++        XFlush( data->display );
          return TRUE;
      }
  
@@ -115,6 +120,7 @@ index 6d59de4..1656626 100644
      clipping_cursor = FALSE;
      data->clipping_cursor = FALSE;
 +    needs_relative_motion = FALSE;
++    clip_center_root.x = clip_center_root.y = 0;
      x11drv_xinput2_disable( data->display, DefaultRootWindow( data->display ) );
  }
  
@@ -175,8 +181,8 @@ index 6d59de4..1656626 100644
 -        TRACE( "pos %d,%d old serial %lu, ignoring\n", event->x, event->y, event->serial );
 -        return FALSE;
 +        struct x11drv_thread_data *thread_data = x11drv_thread_data();
-+        int dx = event->x_root - clip_center.x;
-+        int dy = event->y_root - clip_center.y;
++        int dx = event->x_root - clip_center_root.x;
++        int dy = event->y_root - clip_center_root.y;
 +
 +        if (dx == 0 && dy == 0)
 +            return FALSE;
@@ -186,8 +192,9 @@ index 6d59de4..1656626 100644
 +        input.mi.dwFlags = MOUSEEVENTF_MOVE;
 +
 +        /* Warp cursor back to center and ignore the synthetic recenter event. */
-+        XWarpPointer( event->display, None, root_window, 0, 0, 0, 0, clip_center.x, clip_center.y );
++        XWarpPointer( event->display, None, root_window, 0, 0, 0, 0, clip_center_root.x, clip_center_root.y );
 +        thread_data->warp_serial = NextRequest( event->display );
++        XFlush( event->display );
 +
 +        send_mouse_input( hwnd, event->window, event->state, &input );
 +        return TRUE;
@@ -224,8 +231,8 @@ index 6d59de4..1656626 100644
 -        TRACE( "pos %d,%d old serial %lu, ignoring\n", event->x, event->y, event->serial );
 -        return FALSE;
 +        struct x11drv_thread_data *thread_data = x11drv_thread_data();
-+        int dx = event->x_root - clip_center.x;
-+        int dy = event->y_root - clip_center.y;
++        int dx = event->x_root - clip_center_root.x;
++        int dy = event->y_root - clip_center_root.y;
 +
 +        if (dx == 0 && dy == 0)
 +            return FALSE;
@@ -235,8 +242,9 @@ index 6d59de4..1656626 100644
 +        input.mi.dwFlags = MOUSEEVENTF_MOVE;
 +
 +        /* Warp cursor back to center and ignore the synthetic recenter event. */
-+        XWarpPointer( event->display, None, root_window, 0, 0, 0, 0, clip_center.x, clip_center.y );
++        XWarpPointer( event->display, None, root_window, 0, 0, 0, 0, clip_center_root.x, clip_center_root.y );
 +        thread_data->warp_serial = NextRequest( event->display );
++        XFlush( event->display );
 +
 +        send_mouse_input( hwnd, event->window, event->state, &input );
 +        return TRUE;
