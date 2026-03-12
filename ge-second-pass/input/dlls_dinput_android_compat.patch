@@ -4,8 +4,8 @@
                                          RAWINPUT *raw );
  extern void dinput_keyboard_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam,
                                             RAWINPUT *raw );
-+extern void dinput_keyboard_android_compat_mirror_event( IDirectInputDevice8W *iface, DWORD vkey,
-+                                                         DWORD scan_code, BOOL up );
++extern void dinput_keyboard_android_compat_mirror_state( IDirectInputDevice8W *iface, int dik_code,
++                                                         BYTE new_diks );
  
  extern void check_dinput_events(void);
  
@@ -19,16 +19,17 @@
  #include <string.h>
  
  #define COBJMACROS
-@@ -84,6 +85,37 @@
+@@ -84,6 +85,53 @@
  static CRITICAL_SECTION dinput_hook_crit = { &dinput_critsect_debug, -1, 0, 0, 0, 0 };
  
  static struct list acquired_device_list = LIST_INIT( acquired_device_list );
 +
-+void dinput_keyboard_android_compat_mirror_event( IDirectInputDevice8W *iface, DWORD vkey, DWORD scan_code, BOOL up )
++void dinput_keyboard_android_compat_mirror_state( IDirectInputDevice8W *iface, int dik_code, BYTE new_diks )
 +{
 +#ifdef __ANDROID__
 +    struct dinput_device *device, *targets[8];
 +    UINT count = 0, i;
++    DWORD id = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( dik_code );
 +
 +    if (!getenv( "WINE_ANDROID_DINPUT_COMPAT" )) return;
 +
@@ -48,9 +49,24 @@
 +
 +    for (i = 0; i < count; ++i)
 +    {
-+        extern void dinput_keyboard_mirror_event( IDirectInputDevice8W *iface, DWORD vkey, DWORD scan_code, BOOL up );
-+        dinput_keyboard_mirror_event( &targets[i]->IDirectInputDevice8W_iface, vkey, scan_code, up );
-+        dinput_device_internal_release( targets[i] );
++        struct dinput_device *target = targets[i];
++        DIOBJECTDATAFORMAT *obj;
++        int index;
++
++        EnterCriticalSection( &target->crit );
++        index = dinput_device_object_index_from_id( &target->IDirectInputDevice8W_iface, id );
++        if (index >= 0 && (obj = target->device_format.rgodf + index))
++        {
++            if (target->device_state[obj->dwOfs] != new_diks)
++            {
++                target->device_state[obj->dwOfs] = new_diks;
++                queue_event( &target->IDirectInputDevice8W_iface, index, new_diks, GetCurrentTime(), target->dinput->evsequence++ );
++                if (target->hEvent) SetEvent( target->hEvent );
++            }
++        }
++        LeaveCriticalSection( &target->crit );
++
++        dinput_device_internal_release( target );
 +    }
 +#endif
 +}
@@ -67,7 +83,7 @@
  #include <string.h>
  #include "windef.h"
  #include "winbase.h"
-@@ -35,6 +36,17 @@
+@@ -35,6 +36,15 @@
  WINE_DEFAULT_DEBUG_CHANNEL(dinput);
  
  static const struct dinput_device_vtbl keyboard_vtbl;
@@ -80,33 +96,20 @@
 +    return FALSE;
 +#endif
 +}
-+
-+static int keyboard_android_mirror_depth;
  
  struct keyboard
  {
-@@ -115,6 +127,20 @@
+@@ -115,6 +125,9 @@
  
      if (impl->base.hEvent) SetEvent( impl->base.hEvent );
      LeaveCriticalSection( &impl->base.crit );
 +
-+    if (android_dinput_compat_enabled() && !keyboard_android_mirror_depth)
-+    {
-+        keyboard_android_mirror_depth++;
-+        dinput_keyboard_android_compat_mirror_event( iface, vkey, scan_code, up );
-+        keyboard_android_mirror_depth--;
-+    }
-+}
-+
-+void dinput_keyboard_mirror_event( IDirectInputDevice8W *iface, DWORD vkey, DWORD scan_code, BOOL up )
-+{
-+    struct keyboard *impl = impl_from_IDirectInputDevice8W( iface );
-+
-+    keyboard_handle_event( impl, vkey, scan_code, up );
++    if (android_dinput_compat_enabled())
++        dinput_keyboard_android_compat_mirror_state( iface, dik_code, new_diks );
  }
  
  void dinput_keyboard_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam, RAWINPUT *ri )
-@@ -206,7 +232,8 @@
+@@ -206,7 +219,8 @@
      impl->base.caps.dwDevType = impl->base.instance.dwDevType;
      impl->base.caps.dwFirmwareRevision = 100;
      impl->base.caps.dwHardwareRevision = 100;
