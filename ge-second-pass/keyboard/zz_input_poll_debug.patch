@@ -127,6 +127,7 @@ diff --git a/dlls/dinput/keyboard.c b/dlls/dinput/keyboard.c
  
      if ((index = dinput_device_object_index_from_id( iface, DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( dik_code ) )) >= 0)
 diff --git a/dlls/dinput/device.c b/dlls/dinput/device.c
+index 4166d18..e4a51b7 100644
 --- a/dlls/dinput/device.c
 +++ b/dlls/dinput/device.c
 @@ -20,6 +20,7 @@
@@ -137,11 +138,10 @@ diff --git a/dlls/dinput/device.c b/dlls/dinput/device.c
  #include <string.h>
  #include <math.h>
  
-@@ -41,6 +42,14 @@
- #define WM_WINE_NOTIFY_ACTIVITY WM_USER
+@@ -42,6 +43,14 @@
  
  WINE_DEFAULT_DEBUG_CHANNEL(dinput);
-+
+ 
 +static BOOL input_poll_debug_enabled(void)
 +{
 +    static int enabled = -1;
@@ -149,17 +149,52 @@ diff --git a/dlls/dinput/device.c b/dlls/dinput/device.c
 +    if (enabled == -1) enabled = !!getenv( "WINE_INPUT_POLL_DEBUG" );
 +    return enabled;
 +}
- 
++
  /* Windows uses this GUID for guidProduct on non-keyboard/mouse devices.
   * Data1 contains the device VID (low word) and PID (high word).
-@@ -545,6 +554,19 @@
+  * Data4 ends with the ASCII bytes "PIDVID".
+@@ -478,6 +487,11 @@ static HRESULT WINAPI dinput_device_Acquire( IDirectInputDevice8W *iface )
+     HRESULT hr = DI_OK;
+     DWORD pid;
+ 
++    if (input_poll_debug_enabled())
++        ERR( "INPUTDBG dinput.acquire iface=%p raw=%u coop=0x%x status=%u user_size=%u dev_size=%u event=%p guid=%s\n",
++             iface, impl->use_raw_input, impl->dwCoopLevel, impl->status,
++             impl->user_format.dwDataSize, impl->device_format.dwDataSize, impl->hEvent, debugstr_guid( &impl->guid ) );
++
+     TRACE( "iface %p.\n", iface );
+ 
+     EnterCriticalSection( &impl->crit );
+@@ -497,6 +511,10 @@ static HRESULT WINAPI dinput_device_Acquire( IDirectInputDevice8W *iface )
+     LeaveCriticalSection( &impl->crit );
+     if (hr != DI_OK) return hr;
+ 
++    if (input_poll_debug_enabled())
++        ERR( "INPUTDBG dinput.acquire.result iface=%p hr=%#lx status=%u raw=%u coop=0x%x\n",
++             iface, hr, impl->status, impl->use_raw_input, impl->dwCoopLevel );
++
+     dinput_hooks_acquire_device( iface );
+ 
+     return hr;
+@@ -507,6 +525,11 @@ static HRESULT WINAPI dinput_device_Unacquire( IDirectInputDevice8W *iface )
+     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
+     HRESULT hr = DI_OK;
+ 
++    if (input_poll_debug_enabled())
++        ERR( "INPUTDBG dinput.unacquire iface=%p raw=%u coop=0x%x status=%u user_size=%u dev_size=%u event=%p guid=%s\n",
++             iface, impl->use_raw_input, impl->dwCoopLevel, impl->status,
++             impl->user_format.dwDataSize, impl->device_format.dwDataSize, impl->hEvent, debugstr_guid( &impl->guid ) );
++
+     TRACE( "iface %p.\n", iface );
+ 
+     EnterCriticalSection( &impl->crit );
+@@ -545,6 +568,18 @@ static HRESULT WINAPI dinput_device_SetDataFormat( IDirectInputDevice8W *iface,
      dinput_device_release_user_format( This );
      res = dinput_device_init_user_format( This, format );
  
 +    if (input_poll_debug_enabled())
 +    {
-+        ERR( "INPUTDBG dinput.set_data_format iface=%p guid=%s devtype=%#lx raw=%u fmt_size=%lu fmt_objs=%lu "
-+             "user_size=%lu user_objs=%lu hr=%#lx\n",
++        ERR( "INPUTDBG dinput.set_data_format iface=%p guid=%s devtype=%#lx raw=%u fmt_size=%lu fmt_objs=%lu user_size=%lu user_objs=%lu hr=%#lx\n",
 +             iface, debugstr_guid( &This->guid ), This->instance.dwDevType, This->use_raw_input,
 +             format->dwDataSize, format->dwNumObjs, This->user_format.dwDataSize,
 +             This->user_format.dwNumObjs, res );
@@ -172,17 +207,29 @@ diff --git a/dlls/dinput/device.c b/dlls/dinput/device.c
      LeaveCriticalSection(&This->crit);
      return res;
  }
-@@ -585,6 +607,10 @@
-         hr = DI_OK;
+@@ -586,6 +621,10 @@ static HRESULT WINAPI dinput_device_SetCooperativeLevel( IDirectInputDevice8W *i
      }
      LeaveCriticalSection(&This->crit);
-+
+ 
 +    if (input_poll_debug_enabled())
 +        ERR( "INPUTDBG dinput.set_coop iface=%p guid=%s hwnd=%p flags=%#lx hr=%#lx raw=%u status=%u\n",
 +             iface, debugstr_guid( &This->guid ), hwnd, flags, hr, This->use_raw_input, This->status );
- 
++
      return hr;
  }
+ 
+@@ -612,6 +651,11 @@ static HRESULT WINAPI dinput_device_SetEventNotification( IDirectInputDevice8W *
+ {
+     struct dinput_device *This = impl_from_IDirectInputDevice8W( iface );
+ 
++    if (input_poll_debug_enabled())
++        ERR( "INPUTDBG dinput.set_event iface=%p raw=%u coop=0x%x status=%u old_event=%p new_event=%p guid=%s\n",
++             iface, This->use_raw_input, This->dwCoopLevel, This->status,
++             This->hEvent, event, debugstr_guid( &This->guid ) );
++
+     TRACE( "iface %p, event %p.\n", iface, event );
+ 
+     EnterCriticalSection(&This->crit);
 diff --git a/dlls/dinput/dinput.c b/dlls/dinput/dinput.c
 --- a/dlls/dinput/dinput.c
 +++ b/dlls/dinput/dinput.c
