@@ -328,6 +328,9 @@ jobs:
             printf '%s\n' "$OPTIONAL_INPUT_DEBUG_PATCH" "$OPTIONAL_DINPUT_INSTANCE_DEBUG_PATCH"
           fi
 
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dinput_android_compat_workaround && 'true' || 'false' }}" = "true" ]; then
+            python3 scripts/fix_wineandroid_window_c.py wine-source
+          fi
           python3 scripts/fix_mouse_c.py wine-source
           python3 scripts/filter_patches.py wine-source/build-scripts/build-step-arm64ec.sh wine-source
           python3 scripts/filter_patches.py wine-source/build-scripts/build-step-x86_64.sh wine-source
@@ -785,7 +788,6 @@ jobs:
           rm -rf "$RUNNER_TEMP"/* || true
           echo "=== Disk usage after cleanup ==="
           df -h
-
 
 
 

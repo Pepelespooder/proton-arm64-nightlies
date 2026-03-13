@@ -31,6 +31,7 @@ ALREADY_APPLIED = {
     # git apply never sees their drift-prone hunks against bleeding-edge.
     "dlls_winex11_drv_window_c.patch":      ("dlls/winex11.drv/window.c",    "steam_proton"),
     "dlls_winex11_drv_mouse_c.patch":       ("dlls/winex11.drv/mouse.c",     ["clip_center", "needs_relative_motion", "get_send_mouse_flags"]),
+    "dlls_wineandroid_drv_window_c.patch":  ("dlls/wineandroid.drv/window.c", ["WINE_ANDROID_RELATIVE_MOUSE", "android_relative_mouse_active", "INPUTDBG android.motion"]),
 
     # These are all merged into ValveSoftware/wine bleeding-edge already.
     "dlls_ntdll_loader_c.patch":            ("dlls/ntdll/loader.c",          "libarm64ecfex.dll"),
@@ -124,6 +125,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 
