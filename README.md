@@ -19,6 +19,10 @@ This repo currently produces two artifacts per build:
 
 The internal profile version stays numeric on purpose so stock GameNative recognizes the build as ARM64EC Proton without requiring an app-side parser change.
 
+The build also carries the local explorer shutdown workaround so exiting from the Start menu or a shortcut-launched game returns cleanly instead of leaving the blank pointer screen reported in Winlator issue 55.
+
+Optional `ntsync` support is available for manual builds and workflow-dispatch runs, but it is intentionally opt-in because it is a substantial sync backend change and depends on target kernel support.
+
 ## Getting a Build
 
 1. Open [Releases](../../releases)
@@ -58,4 +62,3 @@ The workflow runs daily at 2 AM UTC and can also be started manually from the [A
 ## License
 
 This repository is licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE).
-

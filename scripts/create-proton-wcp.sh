@@ -22,6 +22,8 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # --- Argument parsing ---
 INPUT_DIR="${1:-}"
 OUTPUT_WCP="${2:-}"
@@ -55,22 +57,23 @@ done
 
 # --- Default version info from git or date ---
 DATE_TAG="$(date -u +%Y%m%d)"
+GIT_HASH="unknown"
 
 if [[ -z "$VERSION_NAME" ]]; then
-    if git -C "$INPUT_DIR" rev-parse --short HEAD 2>/dev/null; then
+    if git -C "$INPUT_DIR" rev-parse --short HEAD >/dev/null 2>&1; then
         GIT_HASH="$(git -C "$INPUT_DIR" rev-parse --short HEAD 2>/dev/null || echo 'unknown')"
-        VERSION_NAME="10-arm64ec-nightly-${DATE_TAG}-${GIT_HASH}"
+        VERSION_NAME="10.0.99-arm64ec"
     else
-        VERSION_NAME="10-arm64ec-nightly-${DATE_TAG}"
+        VERSION_NAME="10.0.99-arm64ec"
     fi
 fi
 
 if [[ -z "$VERSION_CODE" ]]; then
-    VERSION_CODE="${DATE_TAG}"
+    VERSION_CODE="1"
 fi
 
 if [[ -z "$DESCRIPTION" ]]; then
-    DESCRIPTION="Proton 10 ARM64 nightly build (${DATE_TAG})"
+    DESCRIPTION="Proton bleeding-edge ARM64EC ${DATE_TAG} (${GIT_HASH})"
 fi
 
 echo "  Version name: $VERSION_NAME"
@@ -79,21 +82,11 @@ echo "  Description:  $DESCRIPTION"
 
 # --- Always regenerate profile.json ---
 echo "[2/6] Generating profile.json..."
-
-cat > "$INPUT_DIR/profile.json" << EOF
-{
-  "type": "Proton",
-  "versionName": "${VERSION_NAME}",
-  "versionCode": ${VERSION_CODE},
-  "description": "${DESCRIPTION}",
-  "files": [],
-  "wine": {
-    "binPath": "bin",
-    "libPath": "lib",
-    "prefixPack": "prefixPack.txz"
-  }
-}
-EOF
+python3 "$SCRIPT_DIR/generate_profile.py" \
+    "$INPUT_DIR/profile.json" \
+    "$VERSION_NAME" \
+    "$VERSION_CODE" \
+    "$DESCRIPTION"
 echo "  Generated profile.json"
 
 # --- Check compression tools ---

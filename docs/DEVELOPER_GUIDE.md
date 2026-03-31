@@ -15,6 +15,9 @@ Current high-level flow:
    - `proton-*.wcp` with Zstandard
    - `proton-wine-*.wcp.xz` with XZ
 
+That local patch layer includes `patches/ge-gamenative-firstpass/explorer/explorer_startmenu_shutdown_latch.patch`, which avoids the blank mouse-only screen after exiting from the Start menu or a shortcut-launched game.
+It can also opt into the local `ntsync` patch chain from `patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/0163-...0166-...` for explicit test builds.
+
 ## Important Current Decisions
 
 ### Source refs

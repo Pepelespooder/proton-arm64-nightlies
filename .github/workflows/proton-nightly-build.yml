@@ -31,6 +31,11 @@ on:
         required: false
         default: 'proton_10.0'
         type: string
+      release_description:
+        description: 'Optional description for packaged profiles and release notes'
+        required: false
+        default: ''
+        type: string
       disable_gamenative_patches:
         description: 'Disable all GameNative Android patch application and local patch/fix injections'
         required: false
@@ -58,6 +63,11 @@ on:
         type: boolean
       input_poll_debug:
         description: 'Apply input polling and DirectInput instance debug instrumentation patches'
+        required: false
+        default: false
+        type: boolean
+      enable_ntsync:
+        description: 'Apply the optional ntsync patch series'
         required: false
         default: false
         type: boolean
@@ -262,6 +272,28 @@ jobs:
             "$OPTIONAL_EXPLORER_PATCH"
           echo "=== explorer start menu shutdown workaround applied ==="
           printf '%s\n' "$OPTIONAL_EXPLORER_PATCH"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.enable_ntsync && 'true' || 'false' }}" = "true" ]; then
+            for ntsync_patch in \
+              0163-ntdll-Retrieve-and-cache-an-ntsync-device-in-wait-ca.patch \
+              0164-server-Add-an-object-operation-to-retrieve-an-in-pro.patch \
+              0165-ntsync-implementation.patch \
+              0166-Finish-up-ntsync-console-implementation.patch; do
+              cp "patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/$ntsync_patch" \
+                "wine-source/android/patches/$ntsync_patch"
+            done
+            python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh \
+              0163-ntdll-Retrieve-and-cache-an-ntsync-device-in-wait-ca.patch \
+              0164-server-Add-an-object-operation-to-retrieve-an-in-pro.patch \
+              0165-ntsync-implementation.patch \
+              0166-Finish-up-ntsync-console-implementation.patch
+            python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-x86_64.sh \
+              0163-ntdll-Retrieve-and-cache-an-ntsync-device-in-wait-ca.patch \
+              0164-server-Add-an-object-operation-to-retrieve-an-in-pro.patch \
+              0165-ntsync-implementation.patch \
+              0166-Finish-up-ntsync-console-implementation.patch
+            echo "=== optional ntsync patch series applied ==="
+          fi
 
           if [ "${{ github.event.inputs.extra_winebus_patches || 'false' }}" = "true" ]; then
             OPTIONAL_WINEBUS_BASE="https://raw.githubusercontent.com/GloriousEggroll/proton-ge-custom/master/patches/wine-hotfixes/wine-wayland"
@@ -547,6 +579,12 @@ jobs:
           wget -q "https://github.com/GameNative/bionic-prefix-files/raw/main/${{ matrix.prefix_pack }}" \
             -O "$HOME/${{ matrix.output_dir }}/prefixPack.txz"
 
+      - name: Verify runtime ABI
+        run: |
+          OUTPUT_DIR="$HOME/${{ matrix.output_dir }}"
+          WINLATOR_APP_ID="${{ github.event.inputs.target_app_id || 'app.gamenative' }}" \
+            bash "$GITHUB_WORKSPACE/scripts/verify-runtime-abi.sh" "$OUTPUT_DIR"
+
       - name: Generate profile.json files and package
         run: |
           OUTPUT_DIR="$HOME/${{ matrix.output_dir }}"
@@ -555,6 +593,14 @@ jobs:
           VERSION="proton-bleeding-edge-${GIT_DATE}-${GIT_HASH}-${{ matrix.arch_id }}"
           PROFILE_VERSION="${{ matrix.profile_version }}"
           DISPLAY_NAME="Proton bleeding-edge ${{ matrix.display_arch }} ${GIT_DATE} (${GIT_HASH})"
+          DEFAULT_DESCRIPTION="$DISPLAY_NAME"
+          MANUAL_DESCRIPTION="${{ github.event.inputs.release_description || '' }}"
+          if [ -n "$MANUAL_DESCRIPTION" ]; then
+            PROFILE_DESCRIPTION="$DEFAULT_DESCRIPTION | $MANUAL_DESCRIPTION"
+          else
+            PROFILE_DESCRIPTION="$DEFAULT_DESCRIPTION"
+          fi
+          export PROFILE_DESCRIPTION
 
           mkdir -p "$GITHUB_WORKSPACE/output"
           PROTON_VERSION_CODE=1
@@ -564,20 +610,20 @@ jobs:
             "${OUTPUT_DIR}/profile.json" \
             "${PROFILE_VERSION}" \
             "${PROTON_VERSION_CODE}" \
-            "${DISPLAY_NAME}"
+            "${PROFILE_DESCRIPTION}"
 
           bash "$GITHUB_WORKSPACE/scripts/create-proton-wcp.sh" \
             "$OUTPUT_DIR" \
             "$GITHUB_WORKSPACE/output/proton-${VERSION}.wcp" \
             "${PROFILE_VERSION}" \
             "${PROTON_VERSION_CODE}" \
-            "${DISPLAY_NAME}"
+            "${PROFILE_DESCRIPTION}"
 
           python3 scripts/generate_profile.py \
             "${OUTPUT_DIR}/profile.json" \
             "${PROFILE_VERSION}" \
             "${WINE_VERSION_CODE}" \
-            "${DISPLAY_NAME}" \
+            "${PROFILE_DESCRIPTION}" \
             wine
 
           cd "$OUTPUT_DIR"
@@ -590,19 +636,31 @@ jobs:
           WCP_SHA=$(cut -d' ' -f1 "output/proton-${VERSION}.wcp.sha256")
           WCPXZ_SHA=$(cut -d' ' -f1 "output/proton-wine-${VERSION}.wcp.xz.sha256")
 
-          cat > "output/metadata-${{ matrix.arch_id }}.json" <<EOF
-          {
-            "arch": "${{ matrix.arch_id }}",
-            "gitHash": "${GIT_HASH}",
-            "gitDate": "${GIT_DATE}",
-            "version": "${VERSION}",
-            "profileVersion": "${PROFILE_VERSION}",
-            "wcpFile": "proton-${VERSION}.wcp",
-            "wcpSha": "${WCP_SHA}",
-            "wcpxzFile": "proton-wine-${VERSION}.wcp.xz",
-            "wcpxzSha": "${WCPXZ_SHA}"
+          python3 <<PY
+          import json
+          import os
+          from pathlib import Path
+
+          data = {
+              "arch": "${{ matrix.arch_id }}",
+              "gitHash": "${GIT_HASH}",
+              "gitDate": "${GIT_DATE}",
+              "version": "${VERSION}",
+              "profileVersion": "${PROFILE_VERSION}",
+              "profileDescription": os.environ["PROFILE_DESCRIPTION"],
+              "wcpFile": "proton-${VERSION}.wcp",
+              "wcpSha": "${WCP_SHA}",
+              "wcpxzFile": "proton-wine-${VERSION}.wcp.xz",
+              "wcpxzSha": "${WCPXZ_SHA}",
           }
-          EOF
+          Path("output/metadata-${{ matrix.arch_id }}.json").write_text(
+              json.dumps(data, indent=2) + "\\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(data, indent=2))
+          PY
+
+          echo "Using profile description: $PROFILE_DESCRIPTION"
 
           ls -lh output/
 
@@ -711,7 +769,13 @@ jobs:
           GIT_DATE="${{ steps.detect_changes.outputs.git_date }}"
           TAG="${{ steps.detect_changes.outputs.release_tag }}"
           TITLE="Proton bleeding-edge ARM64EC (${GIT_DATE})"
-          NOTES="Built from ValveSoftware/wine bleeding-edge @ ${GIT_HASH} with GameNative Android build scripts. Includes ARM64EC packages in the same release. Automated bleeding-edge build; use at your own risk."
+          DEFAULT_NOTES="Built from ValveSoftware/wine bleeding-edge @ ${GIT_HASH} with GameNative Android build scripts. Includes ARM64EC packages in the same release. Automated bleeding-edge build; use at your own risk."
+          MANUAL_DESCRIPTION="${{ github.event.inputs.release_description || '' }}"
+          if [ -n "$MANUAL_DESCRIPTION" ]; then
+            NOTES="$DEFAULT_NOTES"$'\n\n'"Additional description: $MANUAL_DESCRIPTION"
+          else
+            NOTES="$DEFAULT_NOTES"
+          fi
           gh release create "$TAG" release/* \
             --title "$TITLE" \
             --notes "$NOTES" \
@@ -788,11 +852,6 @@ jobs:
           rm -rf "$RUNNER_TEMP"/* || true
           echo "=== Disk usage after cleanup ==="
           df -h
-
-
-
-
-
 
 
 

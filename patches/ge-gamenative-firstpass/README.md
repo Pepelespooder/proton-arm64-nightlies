@@ -24,6 +24,7 @@ Intent:
 10. `wine-hotfixes/staging/cryptext-CryptExtOpenCER/0001.patch`
 11. `wine-hotfixes/staging/wineboot-ProxySettings/0001.patch`
 12. `proton/0001-fshack-Implement-AMD-FSR-upscaler-for-fullscreen-hac.patch`
+13. `explorer/explorer_startmenu_shutdown_latch.patch`
 ## Suggested apply order
 
 Apply in this order:

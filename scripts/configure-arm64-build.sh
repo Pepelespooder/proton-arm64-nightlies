@@ -21,6 +21,7 @@ SOURCE_DIR="${WINE_SOURCE_DIR:-./wine-source}"
 BUILD_DIR="${BUILD_DIR:-./wine-build}"
 ANDROID_API=28
 BUILD_NAME="proton-10-nightly-arm64ec"
+PROFILE_VERSION="${PROFILE_VERSION:-10.0.99-arm64ec}"
 
 # --- Argument parsing ---
 while [[ $# -gt 0 ]]; do
@@ -114,7 +115,7 @@ HOST_TOOLS_DIR="$BUILD_DIR/tools"
         --without-freetype \
         2>&1 | tee configure-tools.log
 )
-echo "      Host tools configured. Run 'make __builtin__' in $HOST_TOOLS_DIR first."
+echo "      Host tools configured. Run 'make __tooldeps__' in $HOST_TOOLS_DIR first."
 
 # --- Step 2: Configure target (ARM64 Android) ---
 echo ""
@@ -126,7 +127,7 @@ TARGET_BUILD_DIR="$BUILD_DIR/target"
     "$SOURCE_DIR/configure" \
         --host=aarch64-linux-android \
         --with-wine-tools="$HOST_TOOLS_DIR" \
-        --prefix=/opt/wine-android \
+        --prefix="/data/data/app.gamenative/files/imagefs/opt/proton-${PROFILE_VERSION}" \
         --bindir=bin \
         --libdir=lib \
         --enable-archs=aarch64,i386 \
@@ -151,7 +152,7 @@ echo ""
 echo "Configuration complete."
 echo ""
 echo "Next steps:"
-echo "  1. Build host tools:  make -C $HOST_TOOLS_DIR __builtin__"
+echo "  1. Build host tools:  make -C $HOST_TOOLS_DIR __tooldeps__"
 echo "  2. Build Wine:        make -C $TARGET_BUILD_DIR"
 echo "  3. Install:           make -C $TARGET_BUILD_DIR install DESTDIR=\$(pwd)/install"
 echo "  4. Package:           ./scripts/package-proton-wcp.sh install/ output.wcp"

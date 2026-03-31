@@ -40,7 +40,7 @@ Example current Proton metadata:
   "versionCode": 1,
   "description": "Proton bleeding-edge ARM64 20260307 (abcdef0)",
   "files": [],
-  "proton": {
+  "wine": {
     "binPath": "bin",
     "libPath": "lib",
     "prefixPack": "prefixPack.txz"
