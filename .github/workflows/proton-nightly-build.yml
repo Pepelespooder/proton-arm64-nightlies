@@ -285,6 +285,12 @@ jobs:
               cp "$GITHUB_WORKSPACE/patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/$ntsync_patch" \
                 "wine-source/android/patches/$ntsync_patch"
             done
+            python3 scripts/strip_generated_ntsync_patch_sections.py \
+              wine-source/android/patches/0163-ntdll-Retrieve-and-cache-an-ntsync-device-in-wait-ca.patch \
+              wine-source/android/patches/0164-server-Add-an-object-operation-to-retrieve-an-in-pro.patch \
+              wine-source/android/patches/0165-ntsync-implementation.patch \
+              wine-source/android/patches/0166-Finish-up-ntsync-console-implementation.patch \
+              wine-source/android/patches/0172-ntdll-ntsync-remove-unused-variable-fix-datatypes.patch
             python3 scripts/fix_ntsync_chain.py wine-source
             python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh \
               0163-ntdll-Retrieve-and-cache-an-ntsync-device-in-wait-ca.patch \

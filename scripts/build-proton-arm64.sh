@@ -107,14 +107,27 @@ fi
 
 if [[ $ENABLE_NTSYNC -eq 1 ]]; then
     log "Applying optional ntsync patch series"
+    NTSYNC_PATCH_DIR="$BUILD_DIR/ntsync-patches"
+    rm -rf "$NTSYNC_PATCH_DIR"
+    mkdir -p "$NTSYNC_PATCH_DIR"
+    for ntsync_patch in \
+        0163-ntdll-Retrieve-and-cache-an-ntsync-device-in-wait-ca.patch \
+        0164-server-Add-an-object-operation-to-retrieve-an-in-pro.patch \
+        0165-ntsync-implementation.patch \
+        0166-Finish-up-ntsync-console-implementation.patch \
+        0172-ntdll-ntsync-remove-unused-variable-fix-datatypes.patch; do
+        cp "$SCRIPT_DIR/../patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/$ntsync_patch" \
+           "$NTSYNC_PATCH_DIR/$ntsync_patch"
+    done
+    python3 "$SCRIPT_DIR/strip_generated_ntsync_patch_sections.py" "$NTSYNC_PATCH_DIR"/*.patch
     python3 "$SCRIPT_DIR/fix_ntsync_chain.py" "$SOURCE_DIR"
     "$SCRIPT_DIR/apply_patch_series.sh" \
         "$SOURCE_DIR" \
-        "$SCRIPT_DIR/../patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/0163-ntdll-Retrieve-and-cache-an-ntsync-device-in-wait-ca.patch" \
-        "$SCRIPT_DIR/../patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/0164-server-Add-an-object-operation-to-retrieve-an-in-pro.patch" \
-        "$SCRIPT_DIR/../patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/0165-ntsync-implementation.patch" \
-        "$SCRIPT_DIR/../patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/0166-Finish-up-ntsync-console-implementation.patch" \
-        "$SCRIPT_DIR/../patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/0172-ntdll-ntsync-remove-unused-variable-fix-datatypes.patch"
+        "$NTSYNC_PATCH_DIR/0163-ntdll-Retrieve-and-cache-an-ntsync-device-in-wait-ca.patch" \
+        "$NTSYNC_PATCH_DIR/0164-server-Add-an-object-operation-to-retrieve-an-in-pro.patch" \
+        "$NTSYNC_PATCH_DIR/0165-ntsync-implementation.patch" \
+        "$NTSYNC_PATCH_DIR/0166-Finish-up-ntsync-console-implementation.patch" \
+        "$NTSYNC_PATCH_DIR/0172-ntdll-ntsync-remove-unused-variable-fix-datatypes.patch"
     python3 "$SCRIPT_DIR/fix_ntsync.py" "$SOURCE_DIR"
 fi
 
