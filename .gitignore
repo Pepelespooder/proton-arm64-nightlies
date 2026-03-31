@@ -8,6 +8,7 @@
 !/patches/ge-wine-only-wrapper/patches/
 !/patches/ge-wine-only-wrapper/patches/wine-hotfixes/
 !/patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/
+!/patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/0162-ntdll-Add-stub-functions-for-in-process-synchronizat.patch
 !/patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/0163-ntdll-Retrieve-and-cache-an-ntsync-device-in-wait-ca.patch
 !/patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/0164-server-Add-an-object-operation-to-retrieve-an-in-pro.patch
 !/patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/0165-ntsync-implementation.patch

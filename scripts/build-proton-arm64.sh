@@ -109,6 +109,7 @@ if [[ $ENABLE_NTSYNC -eq 1 ]]; then
     log "Applying optional ntsync patch series"
     "$SCRIPT_DIR/apply_patch_series.sh" \
         "$SOURCE_DIR" \
+        "$SCRIPT_DIR/../patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/0162-ntdll-Add-stub-functions-for-in-process-synchronizat.patch" \
         "$SCRIPT_DIR/../patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/0163-ntdll-Retrieve-and-cache-an-ntsync-device-in-wait-ca.patch" \
         "$SCRIPT_DIR/../patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/0164-server-Add-an-object-operation-to-retrieve-an-in-pro.patch" \
         "$SCRIPT_DIR/../patches/ge-wine-only-wrapper/patches/wine-hotfixes/wine-wayland/0165-ntsync-implementation.patch" \

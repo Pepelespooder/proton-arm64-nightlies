@@ -277,6 +277,7 @@ jobs:
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.enable_ntsync && 'true' || 'false' }}" = "true" ]; then
             for ntsync_patch in \
+              0162-ntdll-Add-stub-functions-for-in-process-synchronizat.patch \
               0163-ntdll-Retrieve-and-cache-an-ntsync-device-in-wait-ca.patch \
               0164-server-Add-an-object-operation-to-retrieve-an-in-pro.patch \
               0165-ntsync-implementation.patch \
@@ -286,12 +287,14 @@ jobs:
                 "wine-source/android/patches/$ntsync_patch"
             done
             python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-arm64ec.sh \
+              0162-ntdll-Add-stub-functions-for-in-process-synchronizat.patch \
               0163-ntdll-Retrieve-and-cache-an-ntsync-device-in-wait-ca.patch \
               0164-server-Add-an-object-operation-to-retrieve-an-in-pro.patch \
               0165-ntsync-implementation.patch \
               0166-Finish-up-ntsync-console-implementation.patch \
               0172-ntdll-ntsync-remove-unused-variable-fix-datatypes.patch
             python3 scripts/inject_optional_patches.py wine-source/build-scripts/build-step-x86_64.sh \
+              0162-ntdll-Add-stub-functions-for-in-process-synchronizat.patch \
               0163-ntdll-Retrieve-and-cache-an-ntsync-device-in-wait-ca.patch \
               0164-server-Add-an-object-operation-to-retrieve-an-in-pro.patch \
               0165-ntsync-implementation.patch \
@@ -888,6 +891,5 @@ jobs:
           rm -rf "$RUNNER_TEMP"/* || true
           echo "=== Disk usage after cleanup ==="
           df -h
-
 
 
