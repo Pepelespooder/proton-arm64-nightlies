@@ -4,11 +4,11 @@
   "gitHash": "f865c49",
   "wcp": {
     "fileName": "proton-proton-bleeding-edge-20260401-f865c49-arm64ec.wcp",
-    "sha256": "f0da9218cc00cda0a59fa8861c4985c0871b877f801ad625816f12cad9496227"
+    "sha256": "120e914f6b21302aa7ddc9f0ee1f39dacb3411f46119f9868f1a7dab7e0a66b4"
   },
   "wcpxz": {
     "fileName": "proton-wine-proton-bleeding-edge-20260401-f865c49-arm64ec.wcp.xz",
-    "sha256": "9518c7790fb9e74b1d106f9f7fae2b95fb671f0d185304a163b0db7bd38a68eb"
+    "sha256": "059270c528b29adaafcbda3530bcff8289129a27b3f8b4bb9cbec79762e592b3"
   },
   "artifacts": {
     "arm64ec": {
@@ -16,13 +16,13 @@
       "profileVersion": "10.0.99-arm64ec",
       "wcp": {
         "fileName": "proton-proton-bleeding-edge-20260401-f865c49-arm64ec.wcp",
-        "sha256": "f0da9218cc00cda0a59fa8861c4985c0871b877f801ad625816f12cad9496227"
+        "sha256": "120e914f6b21302aa7ddc9f0ee1f39dacb3411f46119f9868f1a7dab7e0a66b4"
       },
       "wcpxz": {
         "fileName": "proton-wine-proton-bleeding-edge-20260401-f865c49-arm64ec.wcp.xz",
-        "sha256": "9518c7790fb9e74b1d106f9f7fae2b95fb671f0d185304a163b0db7bd38a68eb"
+        "sha256": "059270c528b29adaafcbda3530bcff8289129a27b3f8b4bb9cbec79762e592b3"
       }
     }
   },
-  "releaseTag": "bleeding-edge-20260401-f865c49-run368"
+  "releaseTag": "bleeding-edge-20260401-f865c49-run369"
 }
