@@ -51,7 +51,7 @@ The Proton `wine/` submodule alone is not enough. The build depends on the GameN
 If you want stock GameNative compatibility without an app-side parser change, keep the internal profile version numeric. The current workflow uses:
 
 ```text
-10.0.99-arm64ec
+11
 ```
 
 ### Install path must match
@@ -59,7 +59,7 @@ If you want stock GameNative compatibility without an app-side parser change, ke
 The build bakes its install path to:
 
 ```text
-/data/data/com.winlator.cmod/files/imagefs/opt/proton-10.0.99-arm64ec
+/data/data/com.winlator.cmod/files/imagefs/opt/proton-11
 ```
 
 If you change the internal profile version, update the baked install path too.

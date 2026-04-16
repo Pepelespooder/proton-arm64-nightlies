@@ -136,7 +136,7 @@ jobs:
             build_script: build-step-arm64ec.sh
             output_dir: compiled-files-aarch64
             prefix_pack: prefixPack-arm64ec.txz
-            profile_version: 10.0.99-arm64ec
+            profile_version: 11
             display_arch: ARM64EC
             sysvshm: true
 
@@ -172,6 +172,7 @@ jobs:
             mingw-w64 \
             gcc-multilib \
             g++-multilib \
+            libfontconfig1-dev \
             libfreetype6-dev \
             libfreetype6-dev:i386 \
             libpng-dev \

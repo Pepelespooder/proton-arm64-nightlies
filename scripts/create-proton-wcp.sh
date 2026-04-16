@@ -62,9 +62,9 @@ GIT_HASH="unknown"
 if [[ -z "$VERSION_NAME" ]]; then
     if git -C "$INPUT_DIR" rev-parse --short HEAD >/dev/null 2>&1; then
         GIT_HASH="$(git -C "$INPUT_DIR" rev-parse --short HEAD 2>/dev/null || echo 'unknown')"
-        VERSION_NAME="10.0.99-arm64ec"
+        VERSION_NAME="11"
     else
-        VERSION_NAME="10.0.99-arm64ec"
+        VERSION_NAME="11"
     fi
 fi
 

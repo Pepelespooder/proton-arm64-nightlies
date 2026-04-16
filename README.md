@@ -14,7 +14,7 @@ This repo currently produces two artifacts per build:
 - Source Proton ref: `proton_11.0`
 - GameNative patch ref: `proton_10.0`
 - External naming: `proton-proton_11-YYYYMMDD-HASH-arm64ec`
-- Internal GameNative profile version: `10.0.99-arm64ec`
+- Internal GameNative profile version: `11`
 - No donor or kernel compatibility overlay
 
 The internal profile version stays numeric on purpose so stock GameNative recognizes the build as ARM64EC Proton without requiring an app-side parser change.

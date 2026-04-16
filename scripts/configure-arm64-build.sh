@@ -20,8 +20,8 @@ NDK_PATH="${ANDROID_NDK_HOME:-}"
 SOURCE_DIR="${WINE_SOURCE_DIR:-./wine-source}"
 BUILD_DIR="${BUILD_DIR:-./wine-build}"
 ANDROID_API=28
-BUILD_NAME="proton-10-nightly-arm64ec"
-PROFILE_VERSION="${PROFILE_VERSION:-10.0.99-arm64ec}"
+BUILD_NAME="proton-11-nightly-arm64ec"
+PROFILE_VERSION="${PROFILE_VERSION:-11}"
 
 # --- Argument parsing ---
 while [[ $# -gt 0 ]]; do

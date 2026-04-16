@@ -45,7 +45,7 @@ for dir in "$INPUT_DIR" "$(dirname "$SCRIPT_DIR")/wine-source" "."; do
     fi
 done
 
-VERSION_NAME="10.0.99-arm64ec"
+VERSION_NAME="11"
 VERSION_CODE="1"
 DESCRIPTION="Proton_11 ARM64EC ${DATE_TAG} (${GIT_HASH})"
 OUTPUT_WCP="$OUTPUT_DIR/proton-proton_11-${DATE_TAG}-${GIT_HASH}-arm64ec.wcp"

@@ -46,7 +46,7 @@ Get-FileHash proton-proton_11-20260305-abc1234-arm64ec.wcp -Algorithm SHA256
 
 ## Important Compatibility Note
 
-The visible release naming uses `proton_11`, but the internal profile version is numeric: `10.0.99-arm64ec`.
+The visible release naming uses `proton_11`, and the internal profile version is simply `11`.
 
 That is intentional. Stock GameNative's existing parser only recognizes ARM64EC Proton if the internal version stays numeric.
 

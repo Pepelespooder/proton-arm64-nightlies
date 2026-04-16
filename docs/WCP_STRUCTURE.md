@@ -36,7 +36,7 @@ Example current Proton metadata:
 ```json
 {
   "type": "Proton",
-  "versionName": "10.0.99-arm64ec",
+  "versionName": "11",
   "versionCode": 1,
   "description": "Proton_11 ARM64 20260307 (abcdef0)",
   "files": [],
@@ -55,7 +55,7 @@ Even though the external release naming is `proton_11`, the internal `versionNam
 That internal value currently drives installation to:
 
 ```text
-/opt/proton-10.0.99-arm64ec
+/opt/proton-11
 ```
 
 ## Packaging Commands
