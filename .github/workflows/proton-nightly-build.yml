@@ -657,9 +657,25 @@ jobs:
           python3 scripts/verify_required_markers.py wine-source
 
       - name: Build Proton
+        id: build_proton
+        continue-on-error: true
         run: |
           cd wine-source
-          bash "build-scripts/${{ matrix.build_script }}" --build
+          set -o pipefail
+          bash -e "build-scripts/${{ matrix.build_script }}" --build 2>&1 | tee build-run.log
+
+      - name: Dump build logs
+        if: steps.build_proton.outcome == 'failure'
+        run: |
+          cd wine-source
+          echo "ERROR: build stage failed"
+          if [ -f ./build-run.log ]; then
+            echo "=== error lines from build-run.log ==="
+            grep -nE '(^|[^[:alpha:]])(error:|undefined reference|multiple definition|fatal error:)' ./build-run.log | tail -n 80 || true
+            echo "=== tail: ./build-run.log ==="
+            tail -n 250 ./build-run.log || true
+          fi
+          exit 1
 
       - name: Collect shell32 debug bundle
         run: |
@@ -674,7 +690,7 @@ jobs:
           cp -f wine-source/dlls/shell32/shfldr_fs.c "$BUNDLE_DIR/"
           cp -f wine-source/dlls/shell32/Makefile.in "$BUNDLE_DIR/"
           cp -f wine-source/build-scripts/${{ matrix.build_script }} "$BUNDLE_DIR/"
-          cp -f wine-source/dlls/shell32/aarch64-windows/shell32.dll "$BUNDLE_DIR/aarch64-windows/"
+          cp -f wine-source/dlls/shell32/aarch64-windows/shell32.dll "$BUNDLE_DIR/aarch64-windows/" 2>/dev/null || true
           cp -f wine-source/dlls/shell32/aarch64-windows/*.o "$BUNDLE_DIR/aarch64-windows/" 2>/dev/null || true
           cp -f wine-source/dlls/shell32/arm64ec-windows/*.o "$BUNDLE_DIR/arm64ec-windows/" 2>/dev/null || true
           cp -f wine-source/android/patches/shell32_shlfileop_init_path_components.patch "$BUNDLE_DIR/android-patches/" 2>/dev/null || true
