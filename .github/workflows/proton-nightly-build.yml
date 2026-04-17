@@ -308,6 +308,9 @@ jobs:
           python3 scripts/fix_opengl_c.py wine-source
           echo "=== opengl.c Android GLX workaround applied ==="
 
+          python3 scripts/fix_winemenubuilder_c.py wine-source
+          echo "=== winemenubuilder.c Winlator shortcut workaround applied ==="
+
           OPTIONAL_EXPLORER_PATCH="explorer_startmenu_shutdown_latch.patch"
           cp "$GITHUB_WORKSPACE/patches/ge-gamenative-firstpass/explorer/$OPTIONAL_EXPLORER_PATCH" \
             "wine-source/android/patches/$OPTIONAL_EXPLORER_PATCH"

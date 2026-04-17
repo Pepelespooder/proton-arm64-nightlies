@@ -36,6 +36,7 @@ ALREADY_APPLIED = {
     "dlls_winex11_drv_opengl_c.patch":      ("dlls/winex11.drv/opengl.c",    ['int wine_x11forceglx = 0;', 'atoi(getenv("WINE_X11FORCEGLX"))', '|| wine_x11forceglx)']),
     "dlls_wineandroid_drv_window_c.patch":  ("dlls/wineandroid.drv/window.c", ["WINE_ANDROID_RELATIVE_MOUSE", "android_relative_mouse_active", "INPUTDBG android.motion"]),
     "dlls_nsiproxy_sys_ip_c.patch":         ("dlls/nsiproxy.sys/ip.c",        ["# include <net/if.h>", "mask_v4_to_prefix", "mask_v6_to_prefix"]),
+    "programs_winemenubuilder_winemenubuilder_c.patch": ("programs/winemenubuilder/winemenubuilder.c", ['icons\\\\hicolor', '_wgetenv( L"WINECONFIGDIR" )', 'fprintf(file, "wine %s", escape(path));']),
 
     # These are all merged into ValveSoftware/wine bleeding-edge already.
     "dlls_ntdll_loader_c.patch":            ("dlls/ntdll/loader.c",          "libarm64ecfex.dll"),

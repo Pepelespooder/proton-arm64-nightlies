@@ -62,6 +62,8 @@ txt = txt.replace(
     '  echo "ALREADY APPLIED (skipped): $patch"; '
     'elif [[ "$patch" == "dlls_winex11_drv_opengl_c.patch" ]] && grep -qF "int wine_x11forceglx = 0;" "dlls/winex11.drv/opengl.c" 2>/dev/null && grep -qF "atoi(getenv(\"WINE_X11FORCEGLX\"))" "dlls/winex11.drv/opengl.c" 2>/dev/null && grep -qF "|| wine_x11forceglx)" "dlls/winex11.drv/opengl.c" 2>/dev/null; then '
     '  echo "ALREADY APPLIED (skipped): $patch"; '
+    'elif [[ "$patch" == "programs_winemenubuilder_winemenubuilder_c.patch" ]] && grep -qF "icons\\\\hicolor" "programs/winemenubuilder/winemenubuilder.c" 2>/dev/null && grep -qF "_wgetenv( L\"WINECONFIGDIR\" )" "programs/winemenubuilder/winemenubuilder.c" 2>/dev/null && grep -qF "fprintf(file, \"wine %s\", escape(path));" "programs/winemenubuilder/winemenubuilder.c" 2>/dev/null; then '
+    '  echo "ALREADY APPLIED (skipped): $patch"; '
     'elif git apply --ignore-whitespace -C1 -R --check ./android/patches/$patch 2>/dev/null; then '
     '  echo "ALREADY APPLIED (skipped): $patch"; '
     'elif git apply --ignore-whitespace -C1 --check ./android/patches/$patch 2>/dev/null'
