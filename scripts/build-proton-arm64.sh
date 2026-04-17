@@ -315,6 +315,40 @@ log "Installed to: $INSTALL_DIR"
 log "Contents:"
 ls -lh "$INSTALL_DIR"
 
+log ""
+log "--- Step 5b: Normalizing Proton 11 launcher layout ---"
+ensure_launcher() {
+    local root="$1"
+    local candidate
+
+    mkdir -p "$root/bin"
+
+    if [[ ! -e "$root/bin/wine64" ]]; then
+        for candidate in \
+            "$root/bin/wine64" \
+            "$root/lib/wine/wine64" \
+            "$root/lib/wine/aarch64-unix/wine64" \
+            "$BUILD_DIR/target/loader64/wine64" \
+            "$BUILD_DIR/target/loader64/wine64-preloader"; do
+            if [[ -f "$candidate" && ! -e "$root/bin/$(basename "$candidate")" ]]; then
+                cp -f "$candidate" "$root/bin/$(basename "$candidate")"
+                log "Staged launcher: $candidate -> $root/bin/$(basename "$candidate")"
+            fi
+        done
+    fi
+
+    if [[ ! -e "$root/bin/wine" && -f "$root/bin/wine64" ]]; then
+        cp -f "$root/bin/wine64" "$root/bin/wine"
+        log "Created bin/wine from bin/wine64"
+    fi
+
+    [[ -e "$root/bin/wine" ]] || die "No runnable wine launcher found under $root"
+}
+
+ensure_launcher "$INSTALL_DIR"
+log "Normalized bin contents:"
+ls -lh "$INSTALL_DIR/bin" || true
+
 # ============================================================
 # STEP 6: Verify runtime ABI
 # ============================================================

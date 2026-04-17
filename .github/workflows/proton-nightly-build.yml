@@ -744,6 +744,44 @@ jobs:
           file "$OUTPUT_DIR/bin/wine" 2>/dev/null || true
           file "$OUTPUT_DIR/bin/wineserver" 2>/dev/null || true
 
+          echo "=== Normalizing Proton 11 launcher layout ==="
+          ensure_launcher() {
+            local root="$1"
+            local candidate
+
+            mkdir -p "$root/bin"
+
+            if [ ! -e "$root/bin/wine64" ]; then
+              for candidate in \
+                "$root/bin/wine64" \
+                "$root/lib/wine/wine64" \
+                "$root/lib/wine/aarch64-unix/wine64" \
+                "$PWD/loader64/wine64" \
+                "$PWD/loader64/wine64-preloader"; do
+                if [ -f "$candidate" ] && [ ! -e "$root/bin/$(basename "$candidate")" ]; then
+                  cp -f "$candidate" "$root/bin/$(basename "$candidate")"
+                  echo "staged launcher: $candidate -> $root/bin/$(basename "$candidate")"
+                fi
+              done
+            fi
+
+            if [ ! -e "$root/bin/wine" ] && [ -f "$root/bin/wine64" ]; then
+              cp -f "$root/bin/wine64" "$root/bin/wine"
+              echo "created bin/wine from bin/wine64"
+            fi
+
+            if [ ! -e "$root/bin/wine" ]; then
+              echo "ERROR: no runnable wine launcher found under $root" >&2
+              return 1
+            fi
+          }
+
+          ensure_launcher "$install_dir"
+          ensure_launcher "$OUTPUT_DIR"
+
+          echo "=== normalized bin contents ==="
+          ls -la "$OUTPUT_DIR/bin/" || true
+
           echo "=== Ensuring core D3D DLLs are staged ==="
           ensure_d3d_dll() {
             local arch_dir="$1"
