@@ -3,7 +3,7 @@
 # Package a Proton/Wine Android build directory into a .wcp file for Winlator.
 #
 # Usage:
-#   ./create-proton-wcp.sh <input_dir> <output.wcp> [version_name] [version_code] [description]
+#   ./create-proton-wcp.sh <input_dir> <output.wcp> [version_name] [version_code] [description] [profile_type]
 #
 # Arguments:
 #   input_dir    Directory containing: bin/ lib/ share/ prefixPack.txz (profile.json is always regenerated)
@@ -11,6 +11,7 @@
 #   version_name Optional: version string (default: derived from git or date)
 #   version_code Optional: integer version code (default: YYYYMMDD)
 #   description  Optional: description string
+#   profile_type Optional: GameNative profile type string (default: proton)
 #
 # Requirements:
 #   - zstd binary OR python3 with zstandard module
@@ -30,9 +31,10 @@ OUTPUT_WCP="${2:-}"
 VERSION_NAME="${3:-}"
 VERSION_CODE="${4:-}"
 DESCRIPTION="${5:-}"
+PROFILE_TYPE="${6:-proton}"
 
 if [[ -z "$INPUT_DIR" || -z "$OUTPUT_WCP" ]]; then
-    echo "Usage: $0 <input_dir> <output.wcp> [version_name] [version_code] [description]"
+    echo "Usage: $0 <input_dir> <output.wcp> [version_name] [version_code] [description] [profile_type]"
     exit 1
 fi
 
@@ -79,6 +81,7 @@ fi
 echo "  Version name: $VERSION_NAME"
 echo "  Version code: $VERSION_CODE"
 echo "  Description:  $DESCRIPTION"
+echo "  Profile type: $PROFILE_TYPE"
 
 # --- Always regenerate profile.json ---
 echo "[2/6] Generating profile.json..."
@@ -86,7 +89,8 @@ python3 "$SCRIPT_DIR/generate_profile.py" \
     "$INPUT_DIR/profile.json" \
     "$VERSION_NAME" \
     "$VERSION_CODE" \
-    "$DESCRIPTION"
+    "$DESCRIPTION" \
+    "$PROFILE_TYPE"
 echo "  Generated profile.json"
 
 # --- Check compression tools ---

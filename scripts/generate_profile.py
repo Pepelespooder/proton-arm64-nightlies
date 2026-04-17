@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Generate profile.json for a Proton .wcp package.
-Usage: generate_profile.py <output_path> <version_name> <version_code> <description>
+Usage: generate_profile.py <output_path> <version_name> <version_code> <description> [profile_type]
 """
 import json
 import sys
@@ -9,14 +9,17 @@ import sys
 
 def main():
     if len(sys.argv) < 5:
-        print("Usage: generate_profile.py <output_path> <version_name> <version_code> <description> [wine]")
+        print(
+            "Usage: generate_profile.py <output_path> <version_name> <version_code> "
+            "<description> [profile_type]"
+        )
         sys.exit(1)
 
     out_path = sys.argv[1]
     version_name = sys.argv[2]
     version_code = int(sys.argv[3])
     description = sys.argv[4]
-    profile_type = "Wine" if len(sys.argv) > 5 and sys.argv[5] == "wine" else "Proton"
+    profile_type = sys.argv[5] if len(sys.argv) > 5 else "proton"
 
     # GameNative uses "wine" as the paths key for BOTH Proton and Wine type profiles.
     # Confirmed from GameNative/proton-wine build-proton.yml CI workflow.

@@ -116,7 +116,8 @@ echo "[4/4] Creating .wcp package..."
     "$OUTPUT_WCP" \
     "$VERSION_NAME" \
     "$VERSION_CODE" \
-    "$DESCRIPTION"
+    "$DESCRIPTION" \
+    proton
 
 # --- Summary ---
 echo ""

@@ -341,7 +341,8 @@ python3 "$SCRIPT_DIR/generate_profile.py" \
     "$INSTALL_DIR/profile.json" \
     "$PROFILE_VERSION" \
     "$PROFILE_VERSION_CODE" \
-    "$DISPLAY_NAME"
+    "$DISPLAY_NAME" \
+    proton
 log "profile.json written."
 
 # ============================================================
@@ -373,7 +374,8 @@ OUTPUT_WCP="$OUTPUT_DIR/proton-${ARTIFACT_VERSION}.wcp"
     "$OUTPUT_WCP" \
     "$PROFILE_VERSION" \
     "$PROFILE_VERSION_CODE" \
-    "$DISPLAY_NAME"
+    "$DISPLAY_NAME" \
+    proton
 
 # ============================================================
 # Summary

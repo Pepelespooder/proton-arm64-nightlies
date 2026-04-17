@@ -35,7 +35,7 @@ Example current Proton metadata:
 
 ```json
 {
-  "type": "Proton",
+  "type": "proton",
   "versionName": "11",
   "versionCode": 1,
   "description": "Proton_11 ARM64 20260307 (abcdef0)",

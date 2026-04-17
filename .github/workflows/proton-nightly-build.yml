@@ -531,7 +531,6 @@ jobs:
           fi
 
           PROFILE_VERSION="${{ matrix.profile_version }}"
-          PROTON_PROFILE_NAME="proton-11"
           TARGET_APP_ID="${{ github.event.inputs.target_app_id || 'app.gamenative' }}"
           INSTALL_DIR="/data/data/${TARGET_APP_ID}/files/imagefs/opt/proton-${PROFILE_VERSION}"
           RUNTIME_PATH="/data/data/${TARGET_APP_ID}/files/imagefs/usr"
@@ -801,21 +800,24 @@ jobs:
           export PROFILE_DESCRIPTION
 
           mkdir -p "$GITHUB_WORKSPACE/output"
+          PROTON_PROFILE_VERSION="11"
           PROTON_VERSION_CODE=1
           WINE_VERSION_CODE=0
 
           python3 scripts/generate_profile.py \
             "${OUTPUT_DIR}/profile.json" \
-            "${PROTON_PROFILE_NAME}" \
+            "${PROTON_PROFILE_VERSION}" \
             "${PROTON_VERSION_CODE}" \
-            "${PROFILE_DESCRIPTION}"
+            "${PROFILE_DESCRIPTION}" \
+            proton
 
           bash "$GITHUB_WORKSPACE/scripts/create-proton-wcp.sh" \
             "$OUTPUT_DIR" \
             "$GITHUB_WORKSPACE/output/proton-${VERSION}.wcp" \
-            "${PROTON_PROFILE_NAME}" \
+            "${PROTON_PROFILE_VERSION}" \
             "${PROTON_VERSION_CODE}" \
-            "${PROFILE_DESCRIPTION}"
+            "${PROFILE_DESCRIPTION}" \
+            proton
 
           python3 scripts/generate_profile.py \
             "${OUTPUT_DIR}/profile.json" \
